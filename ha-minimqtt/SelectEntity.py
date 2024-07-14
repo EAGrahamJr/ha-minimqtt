@@ -31,23 +31,48 @@
 #  furnished to do so, subject to the following conditions:
 #
 #
+#  MIT License
+#
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#
 try:
     from typing import List
 except ImportError:
     pass
 
+try:
+    from abc import ABC, abstractmethod
+except ImportError:
+
+    class ABC:
+        pass
+
+
+    class abstractmethod:
+        pass
+
+
 from base import CommandEntity, DeviceIdentifier
 
 
-class SelectHandler:
+class SelectHandler(ABC):
     """
     Defines a class that handles selection options.
     """
 
     @property
+    @abstractmethod
     def options(self) -> List[str]:
         raise NotImplementedError
 
+    @abstractmethod
     def execute_option(self, select: str) -> None:
         raise NotImplementedError
 

@@ -31,9 +31,25 @@
 #  furnished to do so, subject to the following conditions:
 #
 #
+#  MIT License
+#
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#
 from enum import Enum
 
 from base import CommandEntity, DeviceIdentifier, DeviceClass
+
+try:
+    from abc import ABC, abstractmethod
+except ImportError:
+    pass
 
 
 class NumericDevice(DeviceClass):
@@ -93,11 +109,17 @@ class DisplayMode(Enum):
     SLIDER = "slider"
 
 
-class NumberHandler:
+class NumberHandler(ABC):
+    """
+    Handle the input from a number entity.
+    """
+
     @property
+    @abstractmethod
     def current_state(self) -> float:
         raise NotImplementedError
 
+    @abstractmethod
     def set(self, value: float):
         raise NotImplementedError
 

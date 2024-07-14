@@ -31,10 +31,30 @@
 #  furnished to do so, subject to the following conditions:
 #
 #
+#  MIT License
+#
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#
 import json
 import logging
 from enum import Enum
-from socket import gethostname
+
+try:
+    from socket import gethostname
+except ImportError:
+    pass
+
+try:
+    from abc import ABC, abstractmethod
+except ImportError:
+    pass
 
 from mqttwrapper import MQTTClientWrapper
 
@@ -50,6 +70,12 @@ class DeviceIdentifier:
     """
 
     def __init__(self, manufacturer: str, model: str, identifier: str = gethostname()):
+        if not manufacturer.strip():
+            raise ValueError("'manufacturer' must not be blank.")
+        if not model.strip():
+            raise ValueError("'model' must not be blank.")
+        if not identifier.strip():
+            raise ValueError("'identifier' must not be blank.")
         self._manufacturer = manufacturer
         self._model = model
         self._identifier = identifier
@@ -86,7 +112,7 @@ class DeviceIdentifier:
 DEFAULT_MQTT_PREFIX = "kobots_ha/mqtt"
 
 
-class AbstractBaseEntity:
+class AbstractBaseEntity(ABC):
     """
     The root of all the evil that exists here.
 
@@ -173,6 +199,7 @@ class AbstractBaseEntity:
         }
 
     @property
+    @abstractmethod
     def current_state(self) -> str:
         raise NotImplementedError
 
@@ -276,6 +303,7 @@ class CommandEntity(AbstractBaseEntity):
     def command_topic(self):
         return f"{self.topic_prefix}/{self.unique_id}/set"
 
+    @abstractmethod
     def handle_command(self, payload: str):
         """
         Process this command.
