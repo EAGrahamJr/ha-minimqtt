@@ -24,8 +24,8 @@
 Select entity: reports and responds to a defined of textual commands.
 """
 
-from _compatibility import ABC, abstractmethod, List
-from base import CommandEntity, DeviceIdentifier
+from ha_minimqtt._compatibility import ABC, abstractmethod, List
+from ha_minimqtt.base import CommandEntity, DeviceIdentifier
 
 
 class SelectHandler(ABC):

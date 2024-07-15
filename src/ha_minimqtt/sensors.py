@@ -28,7 +28,7 @@ Basic "sensor" definitions -- either on/off or send a number.
 from datetime import timedelta
 from enum import Enum
 
-from base import AbstractBaseEntity, DeviceIdentifier, DeviceClass
+from ha_minimqtt.base import AbstractBaseEntity, DeviceIdentifier, DeviceClass
 
 
 class AbstractSensor(AbstractBaseEntity):
@@ -85,7 +85,7 @@ class AbstractSensor(AbstractBaseEntity):
         discovery_info = super().discovery
         discovery_info["entity_category"] = "diagnostic"
         discovery_info["device_class"] = self._class.value
-        if self._expires > timedelta(seconds=1):
+        if self._expires is not None and self._expires > timedelta(seconds=1):
             discovery_info["expire_after"] = self._expires.total_seconds()
         return discovery_info
 

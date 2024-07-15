@@ -23,7 +23,7 @@
 """
 "Wrappers" (decorators) for MQTT clients.
 """
-from _compatibility import ABC, abstractmethod
+from ha_minimqtt._compatibility import ABC, abstractmethod
 
 
 class MQTTClientWrapper(ABC):

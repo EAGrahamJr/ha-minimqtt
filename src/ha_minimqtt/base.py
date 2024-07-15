@@ -28,18 +28,8 @@ import json
 import logging
 from enum import Enum
 
-try:
-    from socket import gethostname
-except ImportError:
-    pass
-
-try:
-    from abc import ABC, abstractmethod
-except ImportError:
-    pass
-
-from mqttwrapper import MQTTClientWrapper
-
+from ha_minimqtt._compatibility import ABC, abstractmethod, gethostname
+from ha_minimqtt.mqttwrapper import MQTTClientWrapper
 
 class DeviceIdentifier:
     """

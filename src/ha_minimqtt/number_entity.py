@@ -26,9 +26,8 @@ Numeric entity: reports and responds to "number" commands.
 
 from enum import Enum
 
-from base import CommandEntity, DeviceIdentifier, DeviceClass
-
-from _compatibility import ABC, abstractmethod
+from ha_minimqtt.base import CommandEntity, DeviceIdentifier, DeviceClass
+from ha_minimqtt._compatibility import ABC, abstractmethod
 
 
 # pylint: disable=R0801,C0103,R0903
