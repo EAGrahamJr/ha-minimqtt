@@ -20,17 +20,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+Numeric entity: reports and responds to "number" commands.
+"""
+
 from enum import Enum
 
 from base import CommandEntity, DeviceIdentifier, DeviceClass
 
-try:
-    from abc import ABC, abstractmethod
-except ImportError:
-    pass
+from _compatibility import ABC, abstractmethod
 
 
+# pylint: disable=R0801,C0103,R0903
 class NumericDevice(DeviceClass):
+    """
+    The various things HA knows about for numbers. See `Device class
+    <https://www.home-assistant.io/integrations/number/#device-class>`_
+    """
+
     NONE = "none"
     APPARENT_POWER = "apparent_power"
     AQI = "aqi"
@@ -82,6 +89,10 @@ class NumericDevice(DeviceClass):
 
 
 class DisplayMode(Enum):
+    """
+    Defines how HA will display the entity.
+    """
+
     AUTO = "auto"
     BOX = "box"
     SLIDER = "slider"
@@ -95,18 +106,24 @@ class NumberHandler(ABC):
     @property
     @abstractmethod
     def current_state(self) -> float:
+        """
+        :return: the current state of things
+        """
         raise NotImplementedError
 
     @abstractmethod
     def set(self, value: float):
+        """
+        :param value: make the thing do its thing
+        :return:
+        """
         raise NotImplementedError
 
 
+# pylint: disable=R0902
 class NumberEntity(CommandEntity):
     """
     Manages a number entity.
-
-    A "handler" is attached to manage status and commands.
     """
 
     def __init__(
@@ -122,6 +139,25 @@ class NumberEntity(CommandEntity):
         mode: DisplayMode = DisplayMode.AUTO,
         unit_of_measurement: str = None,
     ):
+        # pylint: disable=R0913
+        """
+        Creates a `Number <https://www.home-assistant.io/integrations/number.mqtt/>`_ entity.
+
+        **Note:** the entity must be *started* for it to receive commands and report state.
+
+        :param unique_id: the system-wide id for this entity
+        :param name: the "friendly name" of the entity
+        :param device: which device it's running on
+        :param handler: receives the commands and reports state
+        :param device_class: HA-specific -- this lets HA display icons, etc. directly related to
+            the entity; defaults to "None"
+        :param minimum: minimum number accepted/reported; default 1
+        :param maximum: maximum number accepted/reported; default 100
+        :param step: allowed "jumps" between the maximum and minimum; default 1.0
+        :param mode: how HA displays the number; default *AUTO*
+        :param unit_of_measurement: what this represents; **note:** if using a *device_class*, this
+            must match what HA expects for that class
+        """
         super().__init__("number", unique_id, name, device)
         self._class = device_class
         self._handler = handler
@@ -132,6 +168,7 @@ class NumberEntity(CommandEntity):
         self._uom = unit_of_measurement
         self.icon = "mdi:numeric"
 
+    # pylint: disable=C0116
     @property
     def discovery(self) -> dict:
         disco = super().discovery
@@ -146,9 +183,18 @@ class NumberEntity(CommandEntity):
         self._class.add_discovery(disco, self._uom)
         return disco
 
+    @property
     def current_state(self) -> str:
+        """
+        Extracts the state from the handler for reporting to HA.
+        :return: current state or *None*
+        """
         state = self._handler.current_state
         return str(state) if state is not None else "None"
 
     def handle_command(self, payload: str):
+        """
+        Pass an active command to the handler.
+        :param payload: the incoming command from HA
+        """
         self._handler.set(float(payload))

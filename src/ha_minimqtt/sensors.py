@@ -20,6 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+Basic "sensor" definitions -- either on/off or send a number.
+"""
+# pylint: disable=R0913
+
 from datetime import timedelta
 from enum import Enum
 
@@ -27,6 +32,10 @@ from base import AbstractBaseEntity, DeviceIdentifier, DeviceClass
 
 
 class AbstractSensor(AbstractBaseEntity):
+    """
+    Common idioms between sensors.
+    """
+
     def __init__(
         self,
         component: str,
@@ -36,6 +45,16 @@ class AbstractSensor(AbstractBaseEntity):
         expires: timedelta = None,
         device_class: DeviceClass = None,
     ):
+        """
+        Make a sensor.
+
+        :param component: identifies the HA specific "type" of entity
+        :param unique_id: a system-wide unique identifier
+        :param name: friendly name
+        :param device: what this thing is running on
+        :param expires: optional time when readings expire; default is "never"
+        :param device_class: optional "type" of sensor
+        """
         super().__init__(component, unique_id, name, device)
         self._expires = expires
         self._class = device_class
@@ -43,21 +62,24 @@ class AbstractSensor(AbstractBaseEntity):
 
     @property
     def current_state(self):
+        """
+        :return: the current stored state of this sensor (**must** be set externally)
+        """
         return self._sensor_state or ""
 
     @current_state.setter
     def current_state(self, value: str):
         """
-        Set the current state of the sensor.
+        Set the current state of the sensor. This is transmitted to HA.
 
-        Values should be translated to their "native" string representation (e.g. numbers shouldn't worry about
-        rounding).
+        Values should be translated to their "native" string representation
+        (e.g. numbers shouldn't worry about rounding).
         :param value: the value to set/send
-        :return: None
         """
         self._sensor_state = value
         self.send_current_state()
 
+    # pylint: disable=C0116
     @property
     def discovery(self):
         discovery_info = super().discovery
@@ -68,7 +90,11 @@ class AbstractSensor(AbstractBaseEntity):
         return discovery_info
 
 
-class BinaryDevice(DeviceClass):
+class BinaryDevice(DeviceClass, Enum):
+    """
+    Defines the type of binary (on/off) sensors
+    """
+
     NONE = "none"
     BATTERY = "battery"
     BATTERY_CHARGING = "battery_charging"
@@ -101,6 +127,10 @@ class BinaryDevice(DeviceClass):
 
 
 class BinarySensor(AbstractSensor):
+    """
+    An on/off sensor.
+    """
+
     def __init__(
         self,
         unique_id: str,
@@ -110,6 +140,16 @@ class BinarySensor(AbstractSensor):
         device_class: BinaryDevice = BinaryDevice.NONE,
         off_delay: timedelta = timedelta(0),
     ):
+        """
+        Make one. the **component** is set to *binary_sensor*
+
+        :param unique_id: a system-wide unique identifier
+        :param name: friendly name
+        :param device: what this thing is running on
+        :param expires: optional time when readings expire; default is "never"
+        :param device_class: optional "type" of sensor
+        :param off_delay:
+        """
         super().__init__(
             "binary_sensor", unique_id, name, device, expires, device_class
         )
@@ -117,6 +157,8 @@ class BinarySensor(AbstractSensor):
         self.icon = "mdi:door"
         self._sensor_state = "OFF"
 
+    # pylint: disable=C0116
+    @property
     def discovery(self):
         disco = super().discovery
         self._class.add_discovery(disco)
@@ -135,13 +177,22 @@ class BinarySensor(AbstractSensor):
 
 
 class StateClass(Enum):
+    """
+    How analog data is accumulated/graphed. The default is MEASUREMENT.
+    """
+
     NONE = "none"
     MEASUREMENT = "measurement"
     TOTAL = "total"
     TOTAL_INCREASING = "total_increasing"
 
 
-class AnalogDevice(DeviceClass):
+# pylint: disable=R0801
+class AnalogDevice(DeviceClass, Enum):
+    """
+    The various things HA knows about for numbers.
+    """
+
     NONE = "none"
     APPARENT_POWER = "apparent_power"
     AQI = "aqi"
@@ -196,6 +247,9 @@ class AnalogDevice(DeviceClass):
 
 
 class AnalogSensor(AbstractSensor):
+    """
+    Sends variable numeric data, typically on a regular basis or when "triggered" by a change.
+    """
 
     def __init__(
         self,
@@ -204,10 +258,23 @@ class AnalogSensor(AbstractSensor):
         device: DeviceIdentifier,
         expires: timedelta = None,
         device_class: AnalogDevice = AnalogDevice.NONE,
-        state_class: StateClass = StateClass.NONE,
+        state_class: StateClass = None,
         unit_of_measurement: str = None,
         suggested_precision: int = None,
     ):
+        """
+        Make one. The **component** is set to "sensor".
+        :param unique_id: a system-wide unique identifier
+        :param name: friendly name
+        :param device: what this thing is running on
+        :param expires: optional time when readings expire; default is "never"
+        :param device_class: optional "type" of sensor
+        :param state_class: how the measurement is accumulated
+        :param unit_of_measurement: what this represents; **note:** if using a *device_class*, this
+            must match what HA expects for that class
+        :param suggested_precision: how much info to work with; the default is to use the full
+        value sent
+        """
         super().__init__("sensor", unique_id, name, device, expires, device_class)
 
         self._state_class = state_class
@@ -215,10 +282,13 @@ class AnalogSensor(AbstractSensor):
         self._suggested_precision = suggested_precision
         self.icon = "mdi:gauge"
 
+    # pylint: disable=C0116
     @property
     def discovery(self) -> dict:
         disco = super().discovery
         if self._suggested_precision is not None:
             disco["suggested_display_precision"] = self._suggested_precision
+        if self._state_class is not None:
+            disco["state_class"] = self._state_class.value
         self._class.add_discovery(disco, self._unit_of_measurement)
         return disco

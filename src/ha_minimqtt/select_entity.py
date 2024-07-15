@@ -20,22 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-try:
-    from typing import List
-except ImportError:
-    pass
+"""
+Select entity: reports and responds to a defined of textual commands.
+"""
 
-try:
-    from abc import ABC, abstractmethod
-except ImportError:
-
-    class ABC:
-        pass
-
-    class abstractmethod:
-        pass
-
-
+from _compatibility import ABC, abstractmethod, List
 from base import CommandEntity, DeviceIdentifier
 
 
@@ -47,13 +36,20 @@ class SelectHandler(ABC):
     @property
     @abstractmethod
     def options(self) -> List[str]:
+        """
+        :return: the list of things this can handle
+        """
         raise NotImplementedError
 
     @abstractmethod
     def execute_option(self, select: str) -> None:
+        """
+        :param select: execute this command
+        """
         raise NotImplementedError
 
 
+# pylint: disable=C0116
 class SelectEntity(CommandEntity):
     """
     Defines an entity that presents a set of "selections" that can be executed by
@@ -67,6 +63,16 @@ class SelectEntity(CommandEntity):
         device: DeviceIdentifier,
         handler: SelectHandler,
     ):
+        """
+        Create a `Select <https://www.home-assistant.io/integrations/select.mqtt/>`_ entity.
+
+         **Note:** the entity must be *started* for it to receive commands and report state.
+
+        :param unique_id: the system-wide id for this entity
+        :param name: the "friendly name" of the entity
+        :param device: which device it's running on
+        :param handler: receives the commands and reports state
+        """
         super().__init__("select", unique_id, name, device)
         self._handler = handler
         self.icon = "mdi:list-status"
@@ -78,9 +84,17 @@ class SelectEntity(CommandEntity):
         disco["options"] = self._handler.options
         return disco
 
+    @property
     def current_state(self) -> str:
+        """
+        :return: the last option set or *None*
+        """
         return "None" if self._last_option is None else self._last_option
 
     def handle_command(self, payload: str) -> None:
+        """
+        Passes the command on to the handler and retains it as the "last set" for status.
+        :param payload: the command
+        """
         self._handler.execute_option(payload)
         self._last_option = payload

@@ -20,9 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+"Wrappers" (decorators) for MQTT clients.
+"""
+from _compatibility import ABC, abstractmethod
 
-class MQTTClientWrapper:
 
+class MQTTClientWrapper(ABC):
+    """
+    The basic wrapper definition.
+    """
+
+    @abstractmethod
     def add_connect_listener(self, callback) -> None:
         """
         Add a callback for when the client is (re-)connected to the broker.
@@ -31,6 +40,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
+    @abstractmethod
     def add_disconnect_listener(self, callback) -> None:
         """
         Add a callback for when the client is disconnected from the broker.
@@ -39,6 +49,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
+    @abstractmethod
     def subscribe(self, topic: str, callback) -> None:
         """
         Subscribes a particular callback method to a topic.
@@ -49,6 +60,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
+    @abstractmethod
     def publish(self, topic: str, payload: str):
         """
         Pushes a string payload to the topic.
