@@ -23,15 +23,13 @@
 """
 "Wrappers" (decorators) for MQTT clients.
 """
-from ha_minimqtt._compatibility import ABC, abstractmethod
 
 
-class MQTTClientWrapper(ABC):
+class MQTTClientWrapper:
     """
     The basic wrapper definition.
     """
 
-    @abstractmethod
     def add_connect_listener(self, callback) -> None:
         """
         Add a callback for when the client is (re-)connected to the broker.
@@ -40,7 +38,6 @@ class MQTTClientWrapper(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def add_disconnect_listener(self, callback) -> None:
         """
         Add a callback for when the client is disconnected from the broker.
@@ -49,18 +46,17 @@ class MQTTClientWrapper(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def subscribe(self, topic: str, callback) -> None:
         """
         Subscribes a particular callback method to a topic.
 
-        Note that more than one callback **CAN** be subscribed to a topic.
+        Note that more than one callback **CAN** be subscribed to a topic. All subscribers will be
+        re-subscribed automatically on re-connect.
         :param topic: the topic name
         :param callback: call me when messages arrive
         """
         raise NotImplementedError
 
-    @abstractmethod
     def publish(self, topic: str, payload: str):
         """
         Pushes a string payload to the topic.

@@ -25,7 +25,7 @@ from unittest import TestCase
 from unittest.mock import patch
 from ha_minimqtt.mqttwrapper import MQTTClientWrapper
 from ha_minimqtt.sensors import AnalogSensor,BinarySensor
-from ha_minimqtt.base import DeviceIdentifier
+from ha_minimqtt import DeviceIdentifier
 import json
 
 TEST_DEVICE = DeviceIdentifier("Kobots","tests")

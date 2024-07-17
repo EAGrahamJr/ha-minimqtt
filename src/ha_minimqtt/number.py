@@ -23,21 +23,23 @@
 """
 Numeric entity: reports and responds to "number" commands.
 """
-
-from enum import Enum
-
-from ha_minimqtt.base import CommandEntity, DeviceIdentifier, DeviceClass
-from ha_minimqtt._compatibility import ABC, abstractmethod
+from ha_minimqtt._compatibility import ConstantList
+from ha_minimqtt import (
+    BaseEntity,
+    DeviceIdentifier,
+    DeviceClass,
+    NumberDisplayMode,
+    CommandHandler,
+)
 
 
 # pylint: disable=R0801,C0103,R0903
-class NumericDevice(DeviceClass):
+class NumericDevice(DeviceClass, ConstantList):
     """
     The various things HA knows about for numbers. See `Device class
     <https://www.home-assistant.io/integrations/number/#device-class>`_
     """
 
-    NONE = "none"
     APPARENT_POWER = "apparent_power"
     AQI = "aqi"
     ATMOSPHERIC_PRESSURE = "atmospheric_pressure"
@@ -87,40 +89,13 @@ class NumericDevice(DeviceClass):
     WIND_SPEED = "wind_speed"
 
 
-class DisplayMode(Enum):
-    """
-    Defines how HA will display the entity.
-    """
-
-    AUTO = "auto"
-    BOX = "box"
-    SLIDER = "slider"
-
-
-class NumberHandler(ABC):
-    """
-    Handle the input from a number entity.
-    """
-
-    @property
-    @abstractmethod
-    def current_state(self) -> float:
-        """
-        :return: the current state of things
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def set(self, value: float):
-        """
-        :param value: make the thing do its thing
-        :return:
-        """
-        raise NotImplementedError
+class NumericHandler(CommandHandler):
+    def __init__(self):
+        super().__init__()
 
 
 # pylint: disable=R0902
-class NumberEntity(CommandEntity):
+class NumberEntity(BaseEntity):
     """
     Manages a number entity.
     """
@@ -130,19 +105,16 @@ class NumberEntity(CommandEntity):
         unique_id: str,
         name: str,
         device: DeviceIdentifier,
-        handler: NumberHandler,
-        device_class: NumericDevice = NumericDevice.NONE,
+        handler: CommandHandler,
+        device_class: str = NumericDevice.NONE,
         minimum: int = 1,
         maximum: int = 100,
         step: float = 1.0,
-        mode: DisplayMode = DisplayMode.AUTO,
+        mode: str = NumberDisplayMode.AUTO,
         unit_of_measurement: str = None,
     ):
-        # pylint: disable=R0913
         """
         Creates a `Number <https://www.home-assistant.io/integrations/number.mqtt/>`_ entity.
-
-        **Note:** the entity must be *started* for it to receive commands and report state.
 
         :param unique_id: the system-wide id for this entity
         :param name: the "friendly name" of the entity
@@ -157,43 +129,37 @@ class NumberEntity(CommandEntity):
         :param unit_of_measurement: what this represents; **note:** if using a *device_class*, this
             must match what HA expects for that class
         """
-        super().__init__("number", unique_id, name, device)
-        self._class = device_class
-        self._handler = handler
+        if not handler:
+            raise ValueError("'handler' must be defined")
+        if device_class and device_class not in NumericDevice.list():
+            raise ValueError(
+                f"'device_class' {device_class} must be in the list of supported types."
+            )
+        if mode and mode not in NumberDisplayMode.list():
+            raise ValueError(f"'mode' {mode} must be in the list of supported types.")
+
+        super().__init__(
+            "number",
+            unique_id,
+            name,
+            device,
+            handler,
+            NumericDevice(device_class, unit_of_measurement),
+        )
+
         self._mode = mode
         self._min = minimum
         self._max = maximum
         self._step = step
-        self._uom = unit_of_measurement
         self.icon = "mdi:numeric"
 
-    # pylint: disable=C0116
-    @property
-    def discovery(self) -> dict:
-        disco = super().discovery
+    def _add_other_discovery(self, disco: dict) -> dict:
         disco.update(
             {
                 "max": self._max,
                 "min": self._min,
-                "mode": self._mode.value,
+                "mode": self._mode,
                 "step": self._step,
             }
         )
-        self._class.add_discovery(disco, self._uom)
         return disco
-
-    @property
-    def current_state(self) -> str:
-        """
-        Extracts the state from the handler for reporting to HA.
-        :return: current state or *None*
-        """
-        state = self._handler.current_state
-        return str(state) if state is not None else "None"
-
-    def handle_command(self, payload: str):
-        """
-        Pass an active command to the handler.
-        :param payload: the incoming command from HA
-        """
-        self._handler.set(float(payload))

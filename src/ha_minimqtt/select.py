@@ -24,33 +24,25 @@
 Select entity: reports and responds to a defined of textual commands.
 """
 
-from ha_minimqtt._compatibility import ABC, abstractmethod, List
-from ha_minimqtt.base import CommandEntity, DeviceIdentifier
+from ha_minimqtt._compatibility import List
+from ha_minimqtt import BaseEntity, DeviceIdentifier, CommandHandler
 
 
-class SelectHandler(ABC):
+class SelectHandler(CommandHandler):
     """
     Defines a class that handles selection options.
     """
 
     @property
-    @abstractmethod
     def options(self) -> List[str]:
         """
         :return: the list of things this can handle
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def execute_option(self, select: str) -> None:
-        """
-        :param select: execute this command
-        """
-        raise NotImplementedError
-
 
 # pylint: disable=C0116
-class SelectEntity(CommandEntity):
+class SelectEntity(BaseEntity):
     """
     Defines an entity that presents a set of "selections" that can be executed by
     the designated handler.
@@ -73,28 +65,10 @@ class SelectEntity(CommandEntity):
         :param device: which device it's running on
         :param handler: receives the commands and reports state
         """
-        super().__init__("select", unique_id, name, device)
-        self._handler = handler
+        super().__init__("select", unique_id, name, device, handler)
         self.icon = "mdi:list-status"
-        self._last_option = None
+        self._command_options = handler.options
 
-    @property
-    def discovery(self) -> dict:
-        disco = super().discovery
-        disco["options"] = self._handler.options
+    def _add_other_discovery(self, disco: dict) -> dict:
+        disco["options"] = self._command_options
         return disco
-
-    @property
-    def current_state(self) -> str:
-        """
-        :return: the last option set or *None*
-        """
-        return "None" if self._last_option is None else self._last_option
-
-    def handle_command(self, payload: str) -> None:
-        """
-        Passes the command on to the handler and retains it as the "last set" for status.
-        :param payload: the command
-        """
-        self._handler.execute_option(payload)
-        self._last_option = payload

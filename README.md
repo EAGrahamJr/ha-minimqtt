@@ -8,7 +8,9 @@ HomeAssistant abstraction for use with MQTT. **Specifically** aimed at using [Ci
   * Allows use with things like _asyncio_ without modifying entities
   * Testing!
 
-For the curious, start with the [base](src/ha_minimqtt/base.py). Also, see [current](#current-status)
+For the curious, start with the [base](src/ha_minimqtt/__init__.py). Also, see [current](#current-status)
+
+The beginnings of [How to Use](How%20To%20Use.md) seem to be working.
 
 ## Origin
 Since I come from an Object-Oriented and _functional_ background, I originally crafted these classes in [Kotlin](EAGrahamJr/kobots-parts). I ran across a situation where I could _not_ run a JVM, so I turned to the "next easiest thing" that seemed logical and went with Python. And, since I am more familar with and using [CircuitPython](https://learn.adafruit.com/welcome-to-circuitpython), a conversion of sorts seemed pretty straight-forward.

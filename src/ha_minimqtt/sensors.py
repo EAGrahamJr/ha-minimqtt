@@ -23,79 +23,16 @@
 """
 Basic "sensor" definitions -- either on/off or send a number.
 """
-# pylint: disable=R0913
+from ha_minimqtt._compatibility import ConstantList
 
-from datetime import timedelta
-from enum import Enum
-
-from ha_minimqtt.base import AbstractBaseEntity, DeviceIdentifier, DeviceClass
+from ha_minimqtt import BaseEntity, DeviceIdentifier, DeviceClass
 
 
-class AbstractSensor(AbstractBaseEntity):
-    """
-    Common idioms between sensors.
-    """
-
-    def __init__(
-        self,
-        component: str,
-        unique_id: str,
-        name: str,
-        device: DeviceIdentifier,
-        expires: timedelta = None,
-        device_class: DeviceClass = None,
-    ):
-        """
-        Make a sensor.
-
-        :param component: identifies the HA specific "type" of entity
-        :param unique_id: a system-wide unique identifier
-        :param name: friendly name
-        :param device: what this thing is running on
-        :param expires: optional time when readings expire; default is "never"
-        :param device_class: optional "type" of sensor
-        """
-        super().__init__(component, unique_id, name, device)
-        self._expires = expires
-        self._class = device_class
-        self._sensor_state = None
-
-    @property
-    def current_state(self):
-        """
-        :return: the current stored state of this sensor (**must** be set externally)
-        """
-        return self._sensor_state or ""
-
-    @current_state.setter
-    def current_state(self, value: str):
-        """
-        Set the current state of the sensor. This is transmitted to HA.
-
-        Values should be translated to their "native" string representation
-        (e.g. numbers shouldn't worry about rounding).
-        :param value: the value to set/send
-        """
-        self._sensor_state = value
-        self.send_current_state()
-
-    # pylint: disable=C0116
-    @property
-    def discovery(self):
-        discovery_info = super().discovery
-        discovery_info["entity_category"] = "diagnostic"
-        discovery_info["device_class"] = self._class.value
-        if self._expires is not None and self._expires > timedelta(seconds=1):
-            discovery_info["expire_after"] = self._expires.total_seconds()
-        return discovery_info
-
-
-class BinaryDevice(DeviceClass, Enum):
+class BinaryDevice(DeviceClass, ConstantList):
     """
     Defines the type of binary (on/off) sensors
     """
 
-    NONE = "none"
     BATTERY = "battery"
     BATTERY_CHARGING = "battery_charging"
     CARBON_MONOXIDE = "carbon_monoxide"
@@ -126,7 +63,7 @@ class BinaryDevice(DeviceClass, Enum):
     WINDOW = "window"
 
 
-class BinarySensor(AbstractSensor):
+class BinarySensor(BaseEntity):
     """
     An on/off sensor.
     """
@@ -136,9 +73,9 @@ class BinarySensor(AbstractSensor):
         unique_id: str,
         name: str,
         device: DeviceIdentifier,
-        expires: timedelta = timedelta(0),
-        device_class: BinaryDevice = BinaryDevice.NONE,
-        off_delay: timedelta = timedelta(0),
+        device_class: str = BinaryDevice.NONE,
+        expires: int = None,
+        off_delay: int = None,
     ):
         """
         Make one. the **component** is set to *binary_sensor*
@@ -146,37 +83,85 @@ class BinarySensor(AbstractSensor):
         :param unique_id: a system-wide unique identifier
         :param name: friendly name
         :param device: what this thing is running on
-        :param expires: optional time when readings expire; default is "never"
-        :param device_class: optional "type" of sensor
-        :param off_delay:
+        :param device_class: optional "type" of **BinaryDevice**
+        :param expires: optional time **in seconds** when readings expire; default is "never" and
+            minimum == 1
+        :param off_delay: optional time to send an "off" command after sending "on"; default is
+            "never" and minimum == 1
         """
+        if device_class and device_class not in BinaryDevice.list():
+            raise ValueError(f"'device_class {device_class} is not known")
+        if off_delay and off_delay < 1:
+            raise ValueError(f"'off_delay' {off_delay} must be >= 1 second")
+        if expires and expires < 1:
+            raise ValueError(f"'expires' {expires} must be >= 1")
+
         super().__init__(
-            "binary_sensor", unique_id, name, device, expires, device_class
+            "binary_sensor",
+            unique_id,
+            name,
+            device,
+            device_class=BinaryDevice(device_class),
         )
+        self._expires = expires
         self._off_delay = off_delay
         self.icon = "mdi:door"
         self._sensor_state = "OFF"
 
-    # pylint: disable=C0116
-    @property
-    def discovery(self):
-        disco = super().discovery
-        self._class.add_discovery(disco)
-        if self._off_delay > timedelta(seconds=1):
-            disco["off_delay"] = int(self._off_delay.total_seconds())
+    def __add_to_discovery(disco: dict, expires: int = None) -> dict:
+        """
+        "Helper" method to set stuff on discovery for sensors
+        :param disco:
+        :param expires:
+        :return:
+        """
+        disco["entity_category"] = "diagnostic"
+        if expires:
+            disco["expire_after"] = expires
+        return disco
+
+    def _add_other_discovery(self, disco: dict) -> dict:
+        disco["entity_category"] = "diagnostic"
+        if self._expires:
+            disco["expire_after"] = self._expires
+
+        if self._off_delay:
+            disco["off_delay"] = int(self._off_delay)
+
         return disco
 
     @property
     def current_state(self):
-        return self._sensor_state == "ON"
+        """
+        :return: the current stored state of this sensor (**must** be set externally)
+        """
+        return self._sensor_state or ""
 
     @current_state.setter
     def current_state(self, value):
-        self._sensor_state = "ON" if value else "OFF"
-        self.send_current_state()
+        """
+        Set the current state of the sensor. This is transmitted to HA.
+
+        Must be one of "ON"/"OFF" (case-insensitive) or True/False
+        :param value: the value to set/send
+        """
+        if type(value) == str:
+            v = value.upper()
+            if v != "ON" and v != "OFF":
+                raise ValueError(f"'state' {value} must be ON or OFF")
+            self._sensor_state = value
+            self.send_current_state()
+
+        elif type(value) == bool:
+            self._sensor_state = "ON" if value else "OFF"
+            self.send_current_state()
+        else:
+            raise ValueError(
+                f"'state' {value} must be one of 'ON','OFF;, True, or False"
+            )
 
 
-class StateClass(Enum):
+class StateClass(ConstantList):
     """
     How analog data is accumulated/graphed. The default is MEASUREMENT.
     """
@@ -187,13 +172,11 @@ class StateClass(Enum):
     TOTAL_INCREASING = "total_increasing"
 
 
-# pylint: disable=R0801
-class AnalogDevice(DeviceClass, Enum):
+class AnalogDevice(DeviceClass, ConstantList):
     """
     The various things HA knows about for numbers.
     """
 
-    NONE = "none"
     APPARENT_POWER = "apparent_power"
     AQI = "aqi"
     ATMOSPHERIC_PRESSURE = "atmospheric_pressure"
@@ -246,7 +229,7 @@ class AnalogDevice(DeviceClass, Enum):
     WIND_SPEED = "wind_speed"
 
 
-class AnalogSensor(AbstractSensor):
+class AnalogSensor(BaseEntity):
     """
     Sends variable numeric data, typically on a regular basis or when "triggered" by a change.
     """
@@ -256,9 +239,9 @@ class AnalogSensor(AbstractSensor):
         unique_id: str,
         name: str,
         device: DeviceIdentifier,
-        expires: timedelta = None,
-        device_class: AnalogDevice = AnalogDevice.NONE,
-        state_class: StateClass = None,
+        device_class: str = AnalogDevice.NONE,
+        expires: int = None,
+        state_class: str = None,
         unit_of_measurement: str = None,
         suggested_precision: int = None,
     ):
@@ -275,20 +258,46 @@ class AnalogSensor(AbstractSensor):
         :param suggested_precision: how much info to work with; the default is to use the full
         value sent
         """
-        super().__init__("sensor", unique_id, name, device, expires, device_class)
+        if device_class and device_class not in AnalogDevice.list():
+            raise ValueError(f"'device_class {device_class} is not known")
+        if state_class and state_class not in StateClass.list():
+            raise ValueError(f"'state_class {state_class} is not known")
+        if expires and expires < 1:
+            raise ValueError(f"'expires' {expires} must be >= 1")
 
+        super().__init__(
+            "sensor",
+            unique_id,
+            name,
+            device,
+            device_class=AnalogDevice(device_class, unit_of_measurement),
+        )
+
+        self._expires = expires
         self._state_class = state_class
         self._unit_of_measurement = unit_of_measurement
         self._suggested_precision = suggested_precision
+        self._sensor_state = None
         self.icon = "mdi:gauge"
 
-    # pylint: disable=C0116
-    @property
-    def discovery(self) -> dict:
-        disco = super().discovery
-        if self._suggested_precision is not None:
+    def _add_other_discovery(self, disco: dict) -> dict:
+        disco["entity_category"] = "diagnostic"
+        if self._expires:
+            disco["expire_after"] = self._expires
+
+        if self._suggested_precision:
             disco["suggested_display_precision"] = self._suggested_precision
-        if self._state_class is not None:
-            disco["state_class"] = self._state_class.value
-        self._class.add_discovery(disco, self._unit_of_measurement)
+
         return disco
+
+    @property
+    def current_state(self):
+        """
+        :return: the current stored state of this sensor (**must** be set externally)
+        """
+        return self._sensor_state or ""
+
+    @current_state.setter
+    def current_state(self, value: float):
+        self._sensor_state = str(value)
+        self.send_current_state()

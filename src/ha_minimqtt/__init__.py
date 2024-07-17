@@ -25,11 +25,13 @@ The root of all evil that is this module. All entities derive from these "base" 
 provide the interactions with the underlying MQTT client wrapper.
 """
 import json
-import logging
-from enum import Enum
 
-from ha_minimqtt._compatibility import ABC, abstractmethod, gethostname
+from ha_minimqtt._compatibility import gethostname, ConstantList, logging
 from ha_minimqtt.mqttwrapper import MQTTClientWrapper
+
+# This is the default MQTT topic prefix -- you probably do not want to use it.
+DEFAULT_MQTT_PREFIX = "kobots_ha/mqtt"
+
 
 class DeviceIdentifier:
     """
@@ -89,18 +91,81 @@ class DeviceIdentifier:
         }
 
 
-# This is the default MQTT topic prefix -- you probably do not want to use it.
-DEFAULT_MQTT_PREFIX = "kobots_ha/mqtt"
+class CommandHandler:
+    """
+    Anything that takes input (e.g. commands) from HA. When attached to a **BaseEntity**,
+    it allows HA to send commands to the entity for execution.
+    """
+
+    def handle_command(self, payload: str):
+        """
+        Process this command.
+
+        This should "block" until the execution finishes. Errors *should* be trapped, otherwise
+        they will be relegated to the MQTT client wrapper.
+
+        :param payload: a payload supposedly specific to this entity.
+        :return: None
+        """
+        raise NotImplementedError
+
+    @property
+    def current_state(self) -> str:
+        """
+        **NOTE** this should be the "native" representation of whatever is being controlled. For
+        example, if the thing is numerically controlled or a numeric sensor, the value should be
+        **str(float)**, not a formatted string.
+        :return: the current state of the thingie getting the command; by default, returns an
+        empty string to signify "no state"
+        """
+        return ""
 
 
-# pylint: disable=R0902
-class AbstractBaseEntity(ABC):
+class DeviceClass:
+    """
+    An extension that is used for specific "types" as defined by HA.
+    """
+
+    NONE = "NONE"  # nobody home
+
+    def __init__(self, device_class: str = NONE, unit_of_measurement: str = None):
+        """
+        Create a device class,
+        :param device_class: optional name of the class; defaults to **NONE**
+        :param unit_of_measurement: optional unit of measurement
+        """
+        self._device_class = device_class
+        self._unit_of_measurement = unit_of_measurement
+
+    def add_to_discovery(self, disco: dict) -> dict:
+        """
+        Extends the payload with the class information if set. Also adds measurement details.
+        :param disco: the dictionary to modify
+        :return: the payload
+        """
+        if self._device_class:
+            dc = self._device_class.lower()
+            if dc != DeviceClass.NONE.lower():
+                disco.pop("icon", None)
+                disco["device_class"] = dc
+        if self._unit_of_measurement:
+            disco["unit_of_measurement"] = self._unit_of_measurement
+        return disco
+
+
+class BaseEntity:
     """
     The root of all the evil that exists here.
     """
 
     def __init__(
-        self, component: str, unique_id: str, name: str, device: DeviceIdentifier
+        self,
+        component: str,
+        unique_id: str,
+        name: str,
+        device: DeviceIdentifier,
+        command_handler: CommandHandler = None,
+        device_class: DeviceClass = None,
     ):
         """
         Make the thing. All parameters are required.
@@ -109,6 +174,8 @@ class AbstractBaseEntity(ABC):
         :param unique_id: a system-wide unique identifier
         :param name: friendly name
         :param device: what this thing is running on
+        :param device_class: additional HA-specific typing of the entity (e.g. number types)
+        :param command_handler: the *optional* handler to use if this entity accepts remote commands
         """
 
         if not component.strip():
@@ -130,6 +197,11 @@ class AbstractBaseEntity(ABC):
         self._icon = "mdi:devices"
         self._topic_prefix = DEFAULT_MQTT_PREFIX
         self._client = None
+
+        # Additional HA
+        self._device_class = device_class
+        # A lot of entities are "two-way"
+        self._command_handler = command_handler
 
     @property
     def component(self):
@@ -180,6 +252,15 @@ class AbstractBaseEntity(ABC):
         """
         return self._connected and not self._deleted
 
+    def _add_other_discovery(self, disco: dict) -> dict:
+        """
+        Over-ride this to add more discovery information.
+
+        :param disco: the current disco
+        :return: the modified (maybe) disco
+        """
+        return disco
+
     @property
     def discovery(self) -> dict:
         """
@@ -188,7 +269,7 @@ class AbstractBaseEntity(ABC):
 
         :return: the ready-to-publish discovery descriptor
         """
-        return {
+        disco = {
             "device": self._device.as_json(self._unique_id),
             "entity_category": "config",
             "icon": self._icon,
@@ -197,20 +278,27 @@ class AbstractBaseEntity(ABC):
             "state_topic": self._topic_prefix,
             "unique_id": self._unique_id,
         }
+        if self._command_handler:
+            disco["command_topic"] = self.command_topic
+        if self._device_class:
+            disco = self._device_class.add_to_discovery(disco)
+
+        return self._add_other_discovery(disco)
 
     @property
-    @abstractmethod
     def current_state(self) -> str:
         """
         :return: the current state of the entity
         """
+        if self._command_handler:
+            return self._command_handler.current_state
         raise NotImplementedError
 
     @property
     def topic_prefix(self) -> str:
         """
         :return:the string prepended to the unique_id to create the status topic for MQTT; the
-        default is "kobots_ha/mqtt", which you don't want to use
+        default is DEFAULT_MQTT_TOPIC, which you don't want to use
         """
         return self._topic_prefix
 
@@ -227,6 +315,13 @@ class AbstractBaseEntity(ABC):
         :return: the MQTT topic this sends status on
         """
         return f"{self.topic_prefix}/{self.unique_id}/state"
+
+    @property
+    def command_topic(self):
+        """
+        :return: the command topic for the entity, if used for a **CommandHandler**
+        """
+        return f"{self.topic_prefix}/{self.unique_id}/set"
 
     def start(self, wrapper: MQTTClientWrapper):
         """
@@ -256,7 +351,22 @@ class AbstractBaseEntity(ABC):
         wrapper.add_connect_listener(on_connect)
         wrapper.add_disconnect_listener(on_disconnect)
         wrapper.subscribe("homeassistant/status", on_homeassistant_status)
+
+        ## if there's a handler, wire it in
+        if self._command_handler:
+
+            def handle_command(payload: str):
+                # once the command is handled, trigger a status send automagically to avoid
+                # circular dependencies
+                self._command_handler.handle_command(payload)
+                self.send_current_state()
+
+            topic = f"{self.topic_prefix}/{self.unique_id}/set"
+            wrapper.subscribe(topic, handle_command)
+
         self._client = wrapper
+
+        # assume ready to go
         self.redo_connection()
 
     def redo_connection(self):
@@ -305,59 +415,11 @@ class AbstractBaseEntity(ABC):
         self._deleted = True
 
 
-class CommandEntity(AbstractBaseEntity):
+class NumberDisplayMode(ConstantList):
     """
-    An entity that takes input (e.g. commands) from HA.
-    """
-
-    @property
-    def command_topic(self):
-        """
-        :return: the topic this entity listens to for commands
-        """
-        return f"{self.topic_prefix}/{self.unique_id}/set"
-
-    @abstractmethod
-    def handle_command(self, payload: str):
-        """
-        Process this command.
-
-        :param payload: a payload supposedly specific to this entity.
-        :return: None
-        """
-        raise NotImplementedError
-
-    def start(self, wrapper: MQTTClientWrapper):
-        """
-        In addition to starting discovery, subscribes to the command topic.
-        :param wrapper: the "decorator" for whatever MQTT client is being used
-        :return:
-        """
-        super().start(wrapper)
-        self._client.subscribe(self.command_topic, self.handle_command)
-
-    # pylint: disable=C0116
-    @property
-    def discovery(self):
-        disco = super().discovery
-        disco["command_topic"] = self.command_topic
-        return disco
-
-
-class DeviceClass(Enum):
-    """
-    Extends and marks an Enum to mark one of the recognized device classes.
+    Defines how HA will display "numeric" entities.
     """
 
-    def add_discovery(self, discovery_payload: dict, unit_of_measurement: str = None):
-        """
-        Extends the payload with the class information if set. Also adds measurement details.
-        :param discovery_payload:
-        :param unit_of_measurement:
-        :return:
-        """
-        if self.name != "NONE":
-            discovery_payload.pop("icon", None)
-            discovery_payload["device_class"] = self.value.lower()
-        if unit_of_measurement is not None:
-            discovery_payload["unit_of_measurement"] = unit_of_measurement
+    AUTO = "auto"
+    BOX = "box"
+    SLIDER = "slider"

@@ -26,25 +26,6 @@ on microcontrollers **and** "desktop" computers.
 """
 
 # pylint: disable=R0903,W0611
-
-try:
-    from abc import abstractmethod, ABC
-except ImportError:
-
-    def abstractmethod(func):
-        """
-        Fake
-        :param func: ignored
-        :return: self
-        """
-        return func
-
-    class ABC:
-        """
-        Fake
-        """
-
-
 try:
     from socket import gethostname
 except ImportError:
@@ -65,3 +46,43 @@ except ImportError:
         """
         Fake
         """
+
+
+try:
+    import logging
+except ImportError:
+    import adafruit_logging as logging
+
+
+class ConstantList:
+    """
+    Uses reflection to check for what's been defined. Typically, the class would be:
+
+    | class Foo(ConstantList) {
+    |    BAR = "bar"
+    |    BAZ = "baz"
+    | }
+
+    """
+
+    @classmethod
+    def list(cls):
+        """
+        Get a list of the (supposedly) string attributes of the *child* class.
+        :return: the string things (see above)
+        """
+        things = list(
+            filter(
+                lambda s: not s.endswith("__")
+                and not s.startswith("_")
+                and s != "list",
+                dir(cls),
+            )
+        )
+        # now, run through that and pull out the string things
+        name_list = []
+        for thing in things:
+            attr = getattr(cls, thing)
+            if isinstance(attr, str):
+                name_list.append(attr)
+        return name_list
