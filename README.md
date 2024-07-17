@@ -21,7 +21,7 @@ This module is heavily "class-based" as state needs to be preserved and consiste
 * 
 
 ## Current Status
-I _think_ I have the [project](@EAGrahamJr/Projects/Release 1) set up correctly?
+I _think_ I have the [project](https://github.com/users/EAGrahamJr/projects/3) set up correctly?
 
 * Most of the basic code is written for the HA entities, but not tested
 * Need to determine what's on a micro and what's not (see [_compatibility](src/ha_minimqtt/_compatibility.py) - h/t @elpekenin)
