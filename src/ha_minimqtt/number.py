@@ -32,8 +32,9 @@ from ha_minimqtt import (
     CommandHandler,
 )
 
+# pylint: disable=R0801
 
-# pylint: disable=R0801,C0103,R0903
+
 class NumericDevice(DeviceClass, ConstantList):
     """
     The various things HA knows about for numbers. See `Device class
@@ -89,17 +90,12 @@ class NumericDevice(DeviceClass, ConstantList):
     WIND_SPEED = "wind_speed"
 
 
-class NumericHandler(CommandHandler):
-    def __init__(self):
-        super().__init__()
-
-
-# pylint: disable=R0902
 class NumberEntity(BaseEntity):
     """
     Manages a number entity.
     """
 
+    # pylint: disable=R0913
     def __init__(
         self,
         unique_id: str,

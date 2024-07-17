@@ -27,6 +27,8 @@ from ha_minimqtt._compatibility import ConstantList
 
 from ha_minimqtt import BaseEntity, DeviceIdentifier, DeviceClass
 
+# pylint: disable=R0801
+
 
 class BinaryDevice(DeviceClass, ConstantList):
     """
@@ -68,6 +70,7 @@ class BinarySensor(BaseEntity):
     An on/off sensor.
     """
 
+    # pylint: disable=R0913
     def __init__(
         self,
         unique_id: str,
@@ -108,18 +111,6 @@ class BinarySensor(BaseEntity):
         self.icon = "mdi:door"
         self._sensor_state = "OFF"
 
-    def __add_to_discovery(disco: dict, expires: int = None) -> dict:
-        """
-        "Helper" method to set stuff on discovery for sensors
-        :param disco:
-        :param expires:
-        :return:
-        """
-        disco["entity_category"] = "diagnostic"
-        if expires:
-            disco["expire_after"] = expires
-        return disco
-
     def _add_other_discovery(self, disco: dict) -> dict:
         disco["entity_category"] = "diagnostic"
         if self._expires:
@@ -145,14 +136,14 @@ class BinarySensor(BaseEntity):
         Must be one of "ON"/"OFF" (case-insensitive) or True/False
         :param value: the value to set/send
         """
-        if type(value) == str:
+        if isinstance(value, str):
             v = value.upper()
-            if v != "ON" and v != "OFF":
+            if v not in ("ON", "OFF"):
                 raise ValueError(f"'state' {value} must be ON or OFF")
             self._sensor_state = value
             self.send_current_state()
 
-        elif type(value) == bool:
+        elif isinstance(value, bool):
             self._sensor_state = "ON" if value else "OFF"
             self.send_current_state()
         else:
@@ -161,6 +152,7 @@ class BinarySensor(BaseEntity):
             )
 
 
+# pylint: disable=R0903
 class StateClass(ConstantList):
     """
     How analog data is accumulated/graphed. The default is MEASUREMENT.
@@ -234,6 +226,7 @@ class AnalogSensor(BaseEntity):
     Sends variable numeric data, typically on a regular basis or when "triggered" by a change.
     """
 
+    # pylint: disable=R0913
     def __init__(
         self,
         unique_id: str,

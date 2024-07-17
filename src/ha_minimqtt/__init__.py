@@ -121,6 +121,7 @@ class CommandHandler:
         return ""
 
 
+# pylint: disable=R0903
 class DeviceClass:
     """
     An extension that is used for specific "types" as defined by HA.
@@ -153,11 +154,13 @@ class DeviceClass:
         return disco
 
 
+# pylint: disable=R0903,R0902
 class BaseEntity:
     """
     The root of all the evil that exists here.
     """
 
+    # pylint: disable=R0913
     def __init__(
         self,
         component: str,
@@ -415,6 +418,7 @@ class BaseEntity:
         self._deleted = True
 
 
+# pylint: disable=R0903
 class NumberDisplayMode(ConstantList):
     """
     Defines how HA will display "numeric" entities.
