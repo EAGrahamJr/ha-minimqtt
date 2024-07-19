@@ -121,15 +121,13 @@ class BinarySensor(BaseEntity):
 
         return disco
 
-    @property
     def current_state(self):
         """
         :return: the current stored state of this sensor (**must** be set externally)
         """
         return self._sensor_state or ""
 
-    @current_state.setter
-    def current_state(self, value):
+    def set_current_state(self, value):
         """
         Set the current state of the sensor. This is transmitted to HA.
 
@@ -140,7 +138,7 @@ class BinarySensor(BaseEntity):
             v = value.upper()
             if v not in ("ON", "OFF"):
                 raise ValueError(f"'state' {value} must be ON or OFF")
-            self._sensor_state = value
+            self._sensor_state = v
             self.send_current_state()
 
         elif isinstance(value, bool):
@@ -283,14 +281,18 @@ class AnalogSensor(BaseEntity):
 
         return disco
 
-    @property
     def current_state(self):
         """
         :return: the current stored state of this sensor (**must** be set externally)
         """
         return self._sensor_state or ""
 
-    @current_state.setter
-    def current_state(self, value: float):
+    def set_current_state(self, value: float):
+        """
+        Set and send the current state of the sensor.
+        :param value: **float** value (throws *ValueError* if not)
+        """
+        if not isinstance(value, float):
+            raise ValueError(f"Expecting a float value: `{value}`")
         self._sensor_state = str(value)
         self.send_current_state()

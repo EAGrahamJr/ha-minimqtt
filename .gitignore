@@ -163,4 +163,5 @@ cython_debug/
 
 CIRCUITPY
 
-foo*
+adhoc/foo.py
+adhoc
