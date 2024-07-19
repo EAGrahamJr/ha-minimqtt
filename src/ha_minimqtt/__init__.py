@@ -33,6 +33,7 @@ from ha_minimqtt.mqttwrapper import MQTTClientWrapper
 DEFAULT_MQTT_PREFIX = "kobots_ha/mqtt"
 
 
+# pylint: disable=R0903
 class DeviceIdentifier:
     """
     Defines the particular "device" (typically the physical thing) doing HA stuff.
@@ -54,27 +55,6 @@ class DeviceIdentifier:
         self._model = model
         self._identifier = identifier
 
-    @property
-    def manufacturer(self) -> str:
-        """
-        :return: the "manufacturer" of the device (e.g. "Kobots" is my "brand")
-        """
-        return self._manufacturer
-
-    @property
-    def model(self) -> str:
-        """
-        :return:the "model" of the device (e.g. "Servomatic!" has a lot of servos)
-        """
-        return self._model
-
-    @property
-    def identifier(self) -> str:
-        """
-        :return:the unique identifier for the device in the system
-        """
-        return self._identifier
-
     def as_json(self, unique_id: str) -> dict:
         """
         Create the discovery payload for this device.
@@ -84,10 +64,10 @@ class DeviceIdentifier:
         :return: discovery payload
         """
         return {
-            "identifiers": [unique_id, self.identifier],
-            "name": self.identifier,
-            "model": self.model,
-            "manufacturer": self.manufacturer,
+            "identifiers": [unique_id, self._identifier],
+            "name": self._identifier,
+            "model": self._model,
+            "manufacturer": self._manufacturer,
         }
 
 
@@ -109,7 +89,6 @@ class CommandHandler:
         """
         raise NotImplementedError
 
-    @property
     def current_state(self) -> str:
         """
         **NOTE** this should be the "native" representation of whatever is being controlled. For
@@ -118,10 +97,10 @@ class CommandHandler:
         :return: the current state of the thingie getting the command; by default, returns an
         empty string to signify "no state"
         """
-        return ""
+        raise NotImplementedError
 
 
-# pylint: disable=R0903
+# pielint: disable=R0903
 class DeviceClass:
     """
     An extension that is used for specific "types" as defined by HA.
@@ -138,23 +117,28 @@ class DeviceClass:
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
 
+    def isa_device(self):
+        """
+        :return: if this is a "real" device or NONE
+        """
+        return self._device_class.lower() if self._device_class else None
+
     def add_to_discovery(self, disco: dict) -> dict:
         """
         Extends the payload with the class information if set. Also adds measurement details.
         :param disco: the dictionary to modify
         :return: the payload
         """
-        if self._device_class:
-            dc = self._device_class.lower()
-            if dc != DeviceClass.NONE.lower():
-                disco.pop("icon", None)
-                disco["device_class"] = dc
+        dc = self.isa_device()
+        if dc:
+            disco.pop("icon", None)
+            disco["device_class"] = dc
         if self._unit_of_measurement:
             disco["unit_of_measurement"] = self._unit_of_measurement
         return disco
 
 
-# pylint: disable=R0903,R0902
+# pylint: disable=R0902
 class BaseEntity:
     """
     The root of all the evil that exists here.
@@ -206,54 +190,29 @@ class BaseEntity:
         # A lot of entities are "two-way"
         self._command_handler = command_handler
 
-    @property
-    def component(self):
+    def set_topic_prefix(self, topic: str):
         """
-        :return: what type of entity this is
+        :param topic: set the string prepended to the unique_id to create the status topic for MQTT
         """
-        return self._component
+        self._topic_prefix = topic
 
-    @property
-    def name(self) -> str:
-        """
-        :return:the "friendly" (display) name
-        """
-        return self._name
-
-    @property
-    def unique_id(self) -> str:
-        """
-        :return:the unique identifier in the system
-        """
-        return self._unique_id
-
-    @property
-    def device(self) -> DeviceIdentifier:
-        """
-        :return: the thingie this is running on
-        """
-        return self._device
-
-    @property
-    def icon(self) -> str:
-        """
-        :return: the icon name (defaults to "mdi:devices")
-        """
-        return self._icon
-
-    @icon.setter
-    def icon(self, icon: str):
+    def set_icon(self, icon: str):
         """
         :param icon: the icon to use -- must be one of the "mdi:xxx" definitions supported by HA
         """
         self._icon = icon
 
-    @property
     def ha_connected(self) -> bool:
         """
         :return: True if this entity thinks it's still talking to HA and has not been removed
         """
         return self._connected and not self._deleted
+
+    def get_command_handler(self) -> CommandHandler:
+        """
+        :return: the *optinoal* command handler
+        """
+        return self._command_handler
 
     def _add_other_discovery(self, disco: dict) -> dict:
         """
@@ -264,7 +223,12 @@ class BaseEntity:
         """
         return disco
 
-    @property
+    def _status_topic(self):
+        """
+        :return: topic that reports state
+        """
+        return f"{self._topic_prefix}/{self._unique_id}/state"
+
     def discovery(self) -> dict:
         """
         Create the auto-discovery payload for this entity. This is the default payload used by
@@ -278,53 +242,23 @@ class BaseEntity:
             "icon": self._icon,
             "name": self._name,
             "schema": "json",
-            "state_topic": self._topic_prefix,
+            "state_topic": self._status_topic(),
             "unique_id": self._unique_id,
         }
         if self._command_handler:
-            disco["command_topic"] = self.command_topic
+            disco["command_topic"] = f"{self._topic_prefix}/{self._unique_id}/set"
         if self._device_class:
             disco = self._device_class.add_to_discovery(disco)
 
         return self._add_other_discovery(disco)
 
-    @property
     def current_state(self) -> str:
         """
         :return: the current state of the entity
         """
         if self._command_handler:
-            return self._command_handler.current_state
+            return self._command_handler.current_state()
         raise NotImplementedError
-
-    @property
-    def topic_prefix(self) -> str:
-        """
-        :return:the string prepended to the unique_id to create the status topic for MQTT; the
-        default is DEFAULT_MQTT_TOPIC, which you don't want to use
-        """
-        return self._topic_prefix
-
-    @topic_prefix.setter
-    def topic_prefix(self, topic: str):
-        """
-        :param topic: set the string prepended to the unique_id to create the status topic for MQTT
-        """
-        self._topic_prefix = topic
-
-    @property
-    def status_topic(self):
-        """
-        :return: the MQTT topic this sends status on
-        """
-        return f"{self.topic_prefix}/{self.unique_id}/state"
-
-    @property
-    def command_topic(self):
-        """
-        :return: the command topic for the entity, if used for a **CommandHandler**
-        """
-        return f"{self.topic_prefix}/{self.unique_id}/set"
 
     def start(self, wrapper: MQTTClientWrapper):
         """
@@ -364,8 +298,7 @@ class BaseEntity:
                 self._command_handler.handle_command(payload)
                 self.send_current_state()
 
-            topic = f"{self.topic_prefix}/{self.unique_id}/set"
-            wrapper.subscribe(topic, handle_command)
+            wrapper.subscribe(self.discovery()["command_topic"], handle_command)
 
         self._client = wrapper
 
@@ -374,10 +307,16 @@ class BaseEntity:
 
     def redo_connection(self):
         """
-        Reset the connetion and re-send discovery.
+        Reset the connection and re-send discovery.
         """
         self._connected = True
         self.send_discovery()
+
+    def _discovery_topic(self):
+        """
+        :return: configure or remote a thing
+        """
+        return f"homeassistant/{self._component}/{self._unique_id}/config"
 
     def send_discovery(self, discovery_payload: dict = None):
         """
@@ -386,14 +325,14 @@ class BaseEntity:
 
         :param discovery_payload: the payload to send or uses 'self.discovery' is not set
         """
-        if self.ha_connected:
-            payload = self.discovery if discovery_payload is None else discovery_payload
+        if self.ha_connected():
+            payload = (
+                self.discovery() if discovery_payload is None else discovery_payload
+            )
             jsons = json.dumps(payload)
 
-            self._logger.info("Sending discovery for '%s'", self.unique_id)
-            self._client.publish(
-                f"homeassistant/{self.component}/{self.unique_id}/config", jsons
-            )
+            self._logger.info("Sending discovery for '%s'", self._unique_id)
+            self._client.publish(self._discovery_topic(), jsons)
 
     def send_current_state(self, state: str = None):
         """
@@ -401,20 +340,18 @@ class BaseEntity:
 
         :param state: state to send or uses 'self.current_state' if not set
         """
-        if self.ha_connected:
-            pub_state = self.current_state if state is None else state
-            self._client.publish(self.status_topic, pub_state)
+        if self.ha_connected():
+            pub_state = self.current_state() if state is None else state
+            self._client.publish(self._status_topic(), pub_state)
 
     def remove(self):
         """
         Remove the entity from HA, if connected to the broker. Does **not** throw an error if not.
         Once all entities are removed, the device is also removed.
         """
-        if self.ha_connected:
-            self._logger.warning("Removing device %s", self.unique_id)
-            self._client.publish(
-                f"homeassistant/{self.component}/{self.unique_id}/config", ""
-            )
+        if self.ha_connected():
+            self._logger.warning("Removing device %s", self._unique_id)
+            self._client.publish(self._discovery_topic(), "")
         self._deleted = True
 
 

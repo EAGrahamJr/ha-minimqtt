@@ -90,6 +90,9 @@ class NumericDevice(DeviceClass, ConstantList):
     WIND_SPEED = "wind_speed"
 
 
+# TODO break out a NumberCommandHandler
+
+
 class NumberEntity(BaseEntity):
     """
     Manages a number entity.
