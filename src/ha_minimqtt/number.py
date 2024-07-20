@@ -23,7 +23,7 @@
 """
 Numeric entity: reports and responds to "number" commands.
 """
-from ha_minimqtt._compatibility import ConstantList
+from ha_minimqtt._compatibility import ConstantList,logging
 from ha_minimqtt import (
     BaseEntity,
     DeviceIdentifier,
@@ -90,7 +90,7 @@ class NumericDevice(DeviceClass, ConstantList):
     WIND_SPEED = "wind_speed"
 
 
-# pylint: disable=W0223
+# pylint: disable=W0223,W1203
 class NumberCommandHandler(CommandHandler):
     """
     Interface to a thingie that takes numeric inputs and keeps a numeric state.
@@ -126,8 +126,8 @@ class NumberCommandHandler(CommandHandler):
             self._current_state = self.execute(value)
         except (ValueError, OverflowError):
             # because this is being ignored, log so there's at least some clue what's happening
-            from ha_minimqtt._compatibility import logging
             logging.getLogger(type(self).__name__).error(f"Not a number: {payload}")
+
 
     def current_state(self) -> str:
         return str(self._current_state)
