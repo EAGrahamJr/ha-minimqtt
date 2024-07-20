@@ -22,18 +22,20 @@
 from typing import List
 
 from base import TestBase, TEST_DEVICE
-import unittest
 from unittest.mock import patch
 
-from ha_minimqtt import MQTTClientWrapper, CommandHandler
-from ha_minimqtt.number import NumberEntity, NumericDevice
+from ha_minimqtt import MQTTClientWrapper
+from ha_minimqtt.number import NumberCommandHandler, NumberEntity, NumericDevice
 from ha_minimqtt.select import SelectEntity, SelectHandler
 
 
 class NumberEntityTest(TestBase):
     # mocked command handler
-    class MockHandler(CommandHandler):
+    class MockHandler(NumberCommandHandler):
         _status = ""
+
+        def __init__(self) -> None:
+            super().__init__(minimum=0, maximum=11)
 
         def handle_command(self, payload: str):
             self._status = payload
@@ -59,8 +61,6 @@ class NumberEntityTest(TestBase):
             TEST_DEVICE,
             self.mock_handler,
             device_class=NumericDevice.VOLUME,
-            minimum=0,
-            maximum=11,
         )
         disco = self.start_checks(device, wrapper)
         self.assertEqual("auto", disco["mode"])
@@ -93,7 +93,7 @@ class SelectEntityTest(TestBase):
 
         @property
         def options(self) -> List[str]:
-            return ["Yes","No","Maybe"]
+            return ["Yes", "No", "Maybe"]
 
         def handle_command(self, payload: str):
             self._status = payload
@@ -104,7 +104,7 @@ class SelectEntityTest(TestBase):
     mock_handler = MockHandler()
 
     def create_basic_device(self):
-        return SelectEntity("magic_8","Fortune Thing", TEST_DEVICE, self.mock_handler )
+        return SelectEntity("magic_8", "Fortune Thing", TEST_DEVICE, self.mock_handler)
 
     @patch.object(MQTTClientWrapper, "add_connect_listener")
     def test_discovery_message(self, wrapper):

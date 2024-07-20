@@ -90,7 +90,64 @@ class NumericDevice(DeviceClass, ConstantList):
     WIND_SPEED = "wind_speed"
 
 
-# TODO break out a NumberCommandHandler
+# pylint: disable=W0223
+class NumberCommandHandler(CommandHandler):
+    """
+    Interface to a thingie that takes numeric inputs and keeps a numeric state.
+
+    :param minimum: minimum number accepted/reported; default 1
+    :param maximum: maximum number accepted/reported; default 100
+    :param step: allowed "jumps" between the maximum and minimum; default 1.0
+    """
+
+    def __init__(
+        self,
+        minimum: int = 1,
+        maximum: int = 100,
+        step: float = 1.0,
+    ) -> None:
+        self._min = minimum
+        self._max = maximum
+        self._step = step
+        self._current_state = 0.0
+
+    def execute(self, value: float) -> float:
+        """
+        Implementation specific: input a number, to a thing, and return the state
+        :param value:
+        :return:
+        """
+        raise NotImplementedError
+
+    def handle_command(self, payload: str):
+        try:
+            value = float(payload)
+            # must be updated so the entity can send the value
+            self._current_state = self.execute(value)
+        except (ValueError, OverflowError):
+            # because this is being ignored, log so there's at least some clue what's happening
+            from _compatibility import logging
+            logging.getLogger(type(self).__name__).error(f"Not a number: {payload}")
+
+    def current_state(self) -> str:
+        return str(self._current_state)
+
+    def add_to_discovery(self, disco: dict) -> dict:
+        """
+        Ibid
+
+        :param disco: the discovery dictionary to modify
+
+        :return: the modified dictionary
+        """
+        disco.update(
+            {
+                "max": self._max,
+                "min": self._min,
+                "step": self._step,
+            }
+        )
+        return disco
 
 
 class NumberEntity(BaseEntity):
@@ -104,11 +161,8 @@ class NumberEntity(BaseEntity):
         unique_id: str,
         name: str,
         device: DeviceIdentifier,
-        handler: CommandHandler,
+        handler: NumberCommandHandler,
         device_class: str = NumericDevice.NONE,
-        minimum: int = 1,
-        maximum: int = 100,
-        step: float = 1.0,
         mode: str = NumberDisplayMode.AUTO,
         unit_of_measurement: str = None,
     ):
@@ -121,9 +175,6 @@ class NumberEntity(BaseEntity):
         :param handler: receives the commands and reports state
         :param device_class: HA-specific -- this lets HA display icons, etc. directly related to
             the entity; defaults to "None"
-        :param minimum: minimum number accepted/reported; default 1
-        :param maximum: maximum number accepted/reported; default 100
-        :param step: allowed "jumps" between the maximum and minimum; default 1.0
         :param mode: how HA displays the number; default *AUTO*
         :param unit_of_measurement: what this represents; **note:** if using a *device_class*, this
             must match what HA expects for that class
@@ -147,18 +198,9 @@ class NumberEntity(BaseEntity):
         )
 
         self._mode = mode
-        self._min = minimum
-        self._max = maximum
-        self._step = step
         self.icon = "mdi:numeric"
 
     def _add_other_discovery(self, disco: dict) -> dict:
-        disco.update(
-            {
-                "max": self._max,
-                "min": self._min,
-                "mode": self._mode,
-                "step": self._step,
-            }
-        )
+        disco["mode"] = self._mode
+        self._command_handler.add_to_discovery(disco)
         return disco
