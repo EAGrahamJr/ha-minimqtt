@@ -126,7 +126,7 @@ class NumberCommandHandler(CommandHandler):
             self._current_state = self.execute(value)
         except (ValueError, OverflowError):
             # because this is being ignored, log so there's at least some clue what's happening
-            from _compatibility import logging
+            from ha_minimqtt._compatibility import logging
             logging.getLogger(type(self).__name__).error(f"Not a number: {payload}")
 
     def current_state(self) -> str:
