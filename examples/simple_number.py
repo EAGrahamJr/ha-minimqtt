@@ -40,6 +40,7 @@ class ServoHandler(NumberCommandHandler):
         from time import sleep
 
         self._angle = int(value)
+        print(f"Moved to {self._angle}")
         # classic sleep because this is a blocking op
         sleep(0.005)
         return float(self._angle)
