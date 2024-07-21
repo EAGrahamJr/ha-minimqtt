@@ -8,9 +8,22 @@ HomeAssistant abstraction for use with MQTT. **Specifically** aimed at using [Ci
   * Allows use with things like _asyncio_ without modifying entities
   * Testing!
 
-For the curious, start with the [base](src/ha_minimqtt/__init__.py). Also, see [current](#current-status)
+## How to Use This Library
 
-The beginnings of [How to Use](How%20To%20Use.md) seem to be working.
+### Sample `settings.toml`
+```toml
+CIRCUITPY_WIFI_SSID="MY SSID"
+CIRCUITPY_WIFI_PASSWORD="MY PASSWORD"
+HAMM_BROKRE="192.168.1.4"
+
+# default values
+HAMM_BROKER_PORT = 1883     # int
+HAMM_LOOP_SLEEP = 1.0       # seconds as float
+HAMM_LOOP_TIMEOUT = 1.0     # seconds as float
+HAMM_RECONNECT_DELAY = 5.0  # seconds as float
+```
+### Sample Code
+* [NumberEntity](examples/simple_number.py)
 
 ## Design Philosophy
 This module is heavily "class-based" as state needs to be preserved and consistent across all the things.
@@ -18,7 +31,6 @@ This module is heavily "class-based" as state needs to be preserved and consiste
 * All entities (should) provide some sort of "state". This should be settable from the system and will be appropriately formatted and published to HA.
 * Entities that _receive_ from HA (e.g. `CommandEntity`) also use delegation to interface with the other systems.
 * Everything is extensible: this is a _start_ -- I do not have all 20+ MQTT entities **currently** supported by HA, so ... have fun?
-* 
 
 ## Current Status
 I _think_ I have the [project](https://github.com/users/EAGrahamJr/projects/3) set up correctly?

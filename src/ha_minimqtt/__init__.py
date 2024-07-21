@@ -121,7 +121,9 @@ class DeviceClass:
         """
         :return: if this is a "real" device or NONE
         """
-        return self._device_class.lower() if self._device_class else None
+        if self._device_class and self._device_class.upper() != self.NONE:
+            return self._device_class.lower()
+        return None
 
     def add_to_discovery(self, disco: dict) -> dict:
         """

@@ -23,7 +23,7 @@
 """
 Numeric entity: reports and responds to "number" commands.
 """
-from ha_minimqtt._compatibility import ConstantList,logging
+from ha_minimqtt._compatibility import ConstantList, logging
 from ha_minimqtt import (
     BaseEntity,
     DeviceIdentifier,
@@ -127,7 +127,6 @@ class NumberCommandHandler(CommandHandler):
         except (ValueError, OverflowError):
             # because this is being ignored, log so there's at least some clue what's happening
             logging.getLogger(type(self).__name__).error(f"Not a number: {payload}")
-
 
     def current_state(self) -> str:
         return str(self._current_state)
