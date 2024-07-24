@@ -20,27 +20,38 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-# uses the BOOT button available on Adafruit QT Py ESP32-S3 boards for a binary input.
-
-import asyncio
 import board
-import digitalio
-from ha_minimqtt.sensors import BinarySensor, BinaryDevice
-from utils import my_device, EXAMPLES_TOPIC, wrapper
+import adafruit_logging as logging
+
+from ha_minimqtt import DeviceIdentifier
+from ha_minimqtt.cp_mqtt import HAMMFactory
 
 
-sensor = BinarySensor("push_me", "ESP32 Button", my_device, BinaryDevice.CONNECTIVITY)
-sensor.set_topic_prefix(EXAMPLES_TOPIC)
-button = digitalio.DigitalInOut(board.BUTTON)
-button.switch_to_input(pull=digitalio.Pull.UP)  # makes it "backwards"
+# quick and dirty way to get the "default" I2C channel
+def board_i2c():
+    # Create I2C bus as normal
+    print()
+    try:
+        i2c = board.I2C()  # uses board.SCL and board.SDA
+        print("Using I2C")
+    except Exception:
+        try:
+            i2c = (
+                board.STEMMA_I2C()
+            )  # For using the built-in STEMMA QT connector on a microcontroller
+            print("Using STEMMA")
+        except Exception:
+            print("Unable to locate I2C interface - is anything connected?")
+            exit(1)
+    return i2c
 
 
-async def main():
-    await wrapper.start()
-    sensor.start(wrapper)
-    while True:
-        sensor.set_current_state(not button.value)
-        await asyncio.sleep(1)
+# topic prefix for MQTT
+EXAMPLES_TOPIC = "kobots_ha/examples"
 
+# common "device" for testing/examples
+my_device = DeviceIdentifier("kobots", "QtPy ESP32 S3", identifier="i-spy")
 
-asyncio.run(main())
+# comman wrapper
+wrapper = HAMMFactory.create_wrapper()
+wrapper._logger.setLevel(logging.INFO)

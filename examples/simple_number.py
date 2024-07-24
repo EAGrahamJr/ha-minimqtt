@@ -21,10 +21,10 @@
 #  SOFTWARE.
 
 import asyncio
-from ha_minimqtt import DeviceIdentifier
 from ha_minimqtt.cp_mqtt import HAMMFactory
 from ha_minimqtt.number import NumberEntity, NumberCommandHandler
 import adafruit_logging as logging
+from utils import my_device, EXAMPLES_TOPIC
 
 wrapper = HAMMFactory.create_wrapper()
 wrapper._logger.setLevel(logging.INFO)
@@ -46,14 +46,13 @@ class ServoHandler(NumberCommandHandler):
         return float(self._angle)
 
 
-identifier = DeviceIdentifier("kobots", "QtPy ESP32 S3", identifier="i-spy")
 handler = ServoHandler()
 
 # note there is no specific entity class for a thing that swings by degrees
 servo_entity = NumberEntity(
-    "swinger", "Swinging Thing", identifier, handler, unit_of_measurement="degrees"
+    "swinger", "Swinging Thing", my_device, handler, unit_of_measurement="degrees"
 )
-servo_entity.set_topic_prefix("kobots_ha/examples")
+servo_entity.set_topic_prefix(EXAMPLES_TOPIC)
 
 
 # and... begin

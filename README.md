@@ -23,7 +23,13 @@ HAMM_LOOP_TIMEOUT = 1.0     # seconds as float
 HAMM_RECONNECT_DELAY = 5.0  # seconds as float
 ```
 ### Sample Code
-* [NumberEntity](examples/simple_number.py)
+1. Copy the `utils.py` file to your `CIRCUITPY` drive
+2. Copy the appropriate example file to `CIRCUITPY/code.py`
+3. Should be running
+
+* [Number Entity](examples/simple_number.py)
+* [Binary Sensor](examples/esp_button.py)
+* [Analog Sensor](examples/analog_tof.py)
 
 ## Design Philosophy
 This module is heavily "class-based" as state needs to be preserved and consistent across all the things.
