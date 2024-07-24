@@ -20,39 +20,56 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-# reports the readings from a Time-of-Flight sensor to HA
+# Uses a select/option to set logging
 
-import adafruit_vl6180x
+import adafruit_logging as logging
 import asyncio
 
-from ha_minimqtt.sensors import AnalogSensor, AnalogDevice
-from utils import board_i2c, my_device, EXAMPLES_TOPIC, wrapper
-
-sensor = AnalogSensor(
-    "tof_range",
-    "Test Range",
-    my_device,
-    AnalogDevice.DISTANCE,
-    unit_of_measurement="cm",
-    suggested_precision=1,
-)
-sensor.set_topic_prefix(EXAMPLES_TOPIC)
+from ha_minimqtt._compatibility import List
+from ha_minimqtt.select import SelectHandler, SelectEntity
+from utils import my_device, EXAMPLES_TOPIC, wrapper
 
 
-async def read_sensor():
-    i2c = board_i2c()
-    tof_sensor = adafruit_vl6180x.VL6180X(i2c)
+class Selector(SelectHandler):
+    _state = "INFO"
 
-    while True:
-        mm = tof_sensor.range
-        print(f"Range: {mm}mm")
-        lux1 = tof_sensor.read_lux(adafruit_vl6180x.ALS_GAIN_1)
-        lux10 = tof_sensor.read_lux(adafruit_vl6180x.ALS_GAIN_10)
-        print(f"Lux 1x - {lux1} 10x - {lux10}")
+    def __init__(self):
+        self._logger = logging.getLogger(type(self).__name__)
+        self._logger.setLevel(logging.INFO)
 
-        sensor.set_current_state(float(mm / 10.0))
+    @property
+    def options(self) -> List[str]:
+        return ["ERROR", "WARN", "INFO", "DEBUG"]
 
-        await asyncio.sleep(0.1)
+    def handle_command(self, payload: str):
+        self._logger.info(f"Setting wrapper logger to '{payload}'")
+
+        if payload == "ERROR":
+            wrapper._logger.setLevel(logging.ERROR)
+        elif payload == "WARN":
+            wrapper._logger.setLevel(logging.WARNING)
+        elif payload == "INFO":
+            wrapper._logger.setLevel(logging.INFO)
+        elif payload == "DEBUG":
+            wrapper._logger.setLevel(logging.DEBUG)
+        else:
+            self._logger.error(f"Unknown command '{payload}")
+
+    def current_state(self) -> str:
+        l = wrapper._logger.getEffectiveLevel()
+        if l == logging.ERROR:
+            return "ERROR"
+        if l == logging.WARNING:
+            return "WARN"
+        if l == logging.INFO:
+            return "INFO"
+        if l == logging.DEBUG:
+            return "DEBUG"
+        return ""
+
+
+entity = SelectEntity("drop_me", "ESPY 32 Logging Level", my_device, Selector())
+entity.set_topic_prefix(EXAMPLES_TOPIC)
 
 
 async def read_button_because_i_dont_like_crtl_c():
@@ -66,10 +83,7 @@ async def read_button_because_i_dont_like_crtl_c():
 
 async def main():
     await wrapper.start()
-    sensor.start(wrapper)
-
-    ignored = asyncio.create_task(read_sensor())
-
+    entity.start(wrapper)
     await read_button_because_i_dont_like_crtl_c()
 
 

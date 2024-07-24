@@ -20,14 +20,11 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-import asyncio
-from ha_minimqtt.cp_mqtt import HAMMFactory
-from ha_minimqtt.number import NumberEntity, NumberCommandHandler
-import adafruit_logging as logging
-from utils import my_device, EXAMPLES_TOPIC
+# uses a "fake" servo to respond to numeric inputs
 
-wrapper = HAMMFactory.create_wrapper()
-wrapper._logger.setLevel(logging.INFO)
+import asyncio
+from ha_minimqtt.number import NumberEntity, NumberCommandHandler
+from utils import my_device, EXAMPLES_TOPIC, wrapper
 
 
 class ServoHandler(NumberCommandHandler):
@@ -45,8 +42,6 @@ class ServoHandler(NumberCommandHandler):
         sleep(0.005)
         return float(self._angle)
 
-
-handler = ServoHandler()
 
 # note there is no specific entity class for a thing that swings by degrees
 servo_entity = NumberEntity(
