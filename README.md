@@ -30,23 +30,20 @@ HAMM_RECONNECT_DELAY = 5.0  # seconds as float
 * [Number Entity](examples/simple_number.py)
 * [Binary Sensor](examples/esp_button.py)
 * [Analog Sensor](examples/analog_tof.py)
+* [Select/Options](examples/select_logger.py)
+* [Text Entry](examples/text_me.py)
 
 ## Design Philosophy
-This module is heavily "class-based" as state needs to be preserved and consistent across all the things.
 
-* All entities (should) provide some sort of "state". This should be settable from the system and will be appropriately formatted and published to HA.
-* Entities that _receive_ from HA (e.g. `CommandEntity`) also use delegation to interface with the other systems.
+* This is **not** intended to replace [ESPHome](https://esphome.io/), but rather provide an easier _programming_ interface for HA.
+* It is primarily intended for the CircuitPython environment, but _should_ (?) work elsewhere.
+* * This module is heavily "class-based" as state needs to be preserved and consistent across all the things.
+* State should be settable from the system and should be appropriately formatted and "automagically" published to HA.
+* Entities that _receive_ from HA should use delegation (e.g. `CommandHandler`) to interface with the other systems.
 * Everything is extensible: this is a _start_ -- I do not have all 20+ MQTT entities **currently** supported by HA, so ... have fun?
 
 ## Current Status
 I _think_ I have the [project](https://github.com/users/EAGrahamJr/projects/3) set up correctly?
-
-* Most of the basic code is written for the HA entities, but not tested
-* Need to determine what's on a micro and what's not (see [_compatibility](src/ha_minimqtt/_compatibility.py) - h/t @elpekenin)
-* `pylint` and `black` are being run manually
-* Figure out how to unit test (that's why the decorator:bangbang:)
-* Publish docs?
-* Either add to Adafruit community bundle(s) or publish to PyPi
 
 ## Origin
 Since I come from an Object-Oriented and _functional_ background, I originally crafted these classes in [Kotlin](EAGrahamJr/kobots-parts). I ran across a situation where I could _not_ run a JVM, so I turned to the "next easiest thing" that seemed logical and went with Python. And, since I am more familiar with and using [CircuitPython](https://learn.adafruit.com/welcome-to-circuitpython), a conversion of sorts seemed pretty straight-forward.

@@ -64,6 +64,8 @@ class SelectEntity(BaseEntity):
         :param device: which device it's running on
         :param handler: receives the commands and reports state
         """
+        if not handler:
+            raise ValueError("'handler' must be defined")
         super().__init__("select", unique_id, name, device, handler)
         self.icon = "mdi:list-status"
         self._command_options = handler.options

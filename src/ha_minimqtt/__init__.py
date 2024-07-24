@@ -366,3 +366,32 @@ class NumberDisplayMode(ConstantList):
     AUTO = "auto"
     BOX = "box"
     SLIDER = "slider"
+
+
+class TextEntity(BaseEntity):
+    """
+    Defines an entity that responds to textual commands.
+    """
+
+    def __init__(
+        self,
+        unique_id: str,
+        name: str,
+        device: DeviceIdentifier,
+        handler: CommandHandler,
+    ):
+        """
+        Create a `Select <https://www.home-assistant.io/integrations/text.mqtt/>`_ entity.
+
+         **Note:** the entity must be *started* for it to receive commands and report state.
+
+        :param unique_id: the system-wide id for this entity
+        :param name: the "friendly name" of the entity
+        :param device: which device it's running on
+        :param handler: receives the commands and reports state
+        """
+        if not handler:
+            raise ValueError("'handler' must be defined")
+
+        super().__init__("text", unique_id, name, device, handler)
+        self.icon = "mdi:text"
