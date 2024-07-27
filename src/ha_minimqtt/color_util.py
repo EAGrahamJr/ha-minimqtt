@@ -183,7 +183,7 @@ def parse_color(**kwargs):
     g = kwargs.get("g")
     b = kwargs.get("b")
 
-    if r and g and b:
+    if r is not None and g is not None and b is not None:
         return (r, g, b)
 
     colors = kwargs.get("color")
