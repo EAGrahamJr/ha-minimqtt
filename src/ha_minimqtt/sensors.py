@@ -81,7 +81,7 @@ class BinarySensor(BaseEntity):
         off_delay: int = None,
     ):
         """
-        Make one. the **component** is set to *binary_sensor*
+        Creates a `Binary Sensor <https://www.home-assistant.io/integrations/binary_sensor.mqtt/>`_
 
         :param unique_id: a system-wide unique identifier
         :param name: friendly name
@@ -237,7 +237,8 @@ class AnalogSensor(BaseEntity):
         suggested_precision: int = None,
     ):
         """
-        Make one. The **component** is set to "sensor".
+        Creates an `Analog Sensor <https://www.home-assistant.io/integrations/sensor.mqtt/>`_
+
         :param unique_id: a system-wide unique identifier
         :param name: friendly name
         :param device: what this thing is running on

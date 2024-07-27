@@ -20,46 +20,33 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-# uses a "fake" servo to respond to numeric inputs
-
+import board
+import neopixel
 import asyncio
-from ha_minimqtt.number import NumberEntity, NumberCommandHandler
+
+from ha_minimqtt.cp_device import NeoPixelHandler
+from ha_minimqtt.lights import LightEntity
 from utils import my_device, EXAMPLES_TOPIC, wrapper
 
+pixels = neopixel.NeoPixel(board.NEOPIXEL, 1)
 
-class ServoHandler(NumberCommandHandler):
-    _angle = 0.0
-
-    def __init__(self):
-        super().__init__(minimum=0, maximum=180)
-
-    def execute(self, value: float) -> float:
-        from time import sleep
-
-        self._angle = int(value)
-        print(f"Moved to {self._angle}")
-        # classic sleep because this is a blocking op
-        sleep(0.005)
-        return float(self._angle)
+entity = LightEntity("test_pixel", "Pixie", my_device, NeoPixelHandler(pixels))
+entity.set_topic_prefix(EXAMPLES_TOPIC)
 
 
-# note there is no specific entity class for a thing that swings by degrees
-servo_entity = NumberEntity(
-    "swinger",
-    "Swinging Thing",
-    my_device,
-    ServoHandler(),
-    unit_of_measurement="degrees",
-)
-servo_entity.set_topic_prefix(EXAMPLES_TOPIC)
+async def read_button_because_i_dont_like_crtl_c():
+    import board, digitalio
+
+    button = digitalio.DigitalInOut(board.BUTTON)
+    button.switch_to_input(pull=digitalio.Pull.UP)  # makes it "backwards"
+    while button.value:
+        await asyncio.sleep(1)
 
 
-# and... begin
 async def main():
     await wrapper.start()
-    servo_entity.start(wrapper)
-    while True:
-        await asyncio.sleep(0)
+    entity.start(wrapper)
+    await read_button_because_i_dont_like_crtl_c()
 
 
 asyncio.run(main())

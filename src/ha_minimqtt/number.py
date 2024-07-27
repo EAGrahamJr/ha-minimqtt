@@ -201,5 +201,4 @@ class NumberEntity(BaseEntity):
 
     def _add_other_discovery(self, disco: dict) -> dict:
         disco["mode"] = self._mode
-        self._command_handler.add_to_discovery(disco)
         return disco

@@ -40,6 +40,10 @@ class SelectHandler(CommandHandler):
         """
         raise NotImplementedError
 
+    def add_to_discovery(self, disco: dict) -> dict:
+        disco["options"] = self.options
+        return disco
+
 
 class SelectEntity(BaseEntity):
     """
@@ -69,7 +73,3 @@ class SelectEntity(BaseEntity):
         super().__init__("select", unique_id, name, device, handler)
         self.icon = "mdi:list-status"
         self._command_options = handler.options
-
-    def _add_other_discovery(self, disco: dict) -> dict:
-        disco["options"] = self._command_options
-        return disco

@@ -80,7 +80,7 @@ class BinarySensorTestCase(TestBase):
             "id2", "BS", TEST_DEVICE, BinaryDevice.BATTERY, off_delay=5
         )
         disco = self.start_checks(device, wrapper)
-        self.assertEqual("5", disco["off_delay"])
+        self.assertEqual(5, disco["off_delay"])
 
     @patch.object(MQTTClientWrapper, "add_connect_listener")
     def test_basic_state(self, wrapper):

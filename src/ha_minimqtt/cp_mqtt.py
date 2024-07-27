@@ -27,6 +27,9 @@ This is set up as a separate import so that other implementations may not necess
 to CircuitPython. It is **NOT** necessarily intended for high-speed reporting.
 """
 
+# pylint: disable=E0401
+# wifi and socketpool???
+
 import asyncio
 import wifi
 import socketpool

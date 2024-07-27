@@ -1,6 +1,8 @@
 # ha-minimqtt
 HomeAssistant abstraction for use with MQTT. **Specifically** aimed at using [CircuitPython](https://learn.adafruit.com/welcome-to-circuitpython) on microcontrollers with `asyncio` and `minimqtt`, but _should_ be playable on other platforms.
 
+<sup>_Note: I really juse wanted an "easy" learning IR remote, but not apprarenltly available oopen-source._</sup>
+
 * Defines HA _entities_ so that actual MQTT communication is abstracted
 * Uses the HA [discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) mechanism to register and un-register entities
 * Wraps an MQTT client with delegation
@@ -27,6 +29,7 @@ HAMM_RECONNECT_DELAY = 5.0  # seconds as float
 2. Copy the appropriate example file to `CIRCUITPY/code.py`
 3. Should be running
 
+* [Light Entity](examples/neopixel_light.py) -- listed first because it's the one you're probably looking for
 * [Number Entity](examples/simple_number.py)
 * [Binary Sensor](examples/esp_button.py)
 * [Analog Sensor](examples/analog_tof.py)

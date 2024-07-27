@@ -99,6 +99,15 @@ class CommandHandler:
         """
         raise NotImplementedError
 
+    def add_to_discovery(self, disco: dict) -> dict:
+        """
+        Handlers may add/alter additional capabilities to the discovery payload.
+
+        :param disco: current discovery payload
+        :return:  the discovery payload (default is to do nothing)
+        """
+        return disco
+
 
 # pielint: disable=R0903
 class DeviceClass:
@@ -249,6 +258,7 @@ class BaseEntity:
         }
         if self._command_handler:
             disco["command_topic"] = f"{self._topic_prefix}/{self._unique_id}/set"
+            disco = self._command_handler.add_to_discovery(disco)
         if self._device_class:
             disco = self._device_class.add_to_discovery(disco)
 
