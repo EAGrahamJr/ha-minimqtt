@@ -12,6 +12,8 @@ HomeAssistant abstraction for use with MQTT. **Specifically** aimed at using [Ci
 
 ## How to Use This Library
 
+The [CircuitPython Client](src/ha_minimqtt/cp_mqtt.py) contains a static factory that creates a "wrapper" that can be used with the HA entities.
+
 ### Sample `settings.toml`
 ```toml
 CIRCUITPY_WIFI_SSID="MY SSID"
