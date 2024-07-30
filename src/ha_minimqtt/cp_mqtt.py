@@ -34,8 +34,7 @@ import asyncio
 import wifi
 import socketpool
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
-
-from ha_minimqtt._compatibility import logging
+from ha_minimqtt._compatibility import logging, Callable
 from ha_minimqtt import MQTTClientWrapper
 
 
@@ -46,9 +45,8 @@ class CircuitPythonWrapper(MQTTClientWrapper):
     that have multiple uses for the radio. See HAMMFactory for an environment-based factory.
     """
 
-    _mqtt_client = None
+    __mqtt_client = None
 
-    # if the queue ever reaches this size, the device is sending too much data
     _publish_queue = []
     _subscribers = {}
     _connect_listeners = []
@@ -66,6 +64,7 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         loop_sleep: float = 1.0,
         loop_timeout: float = 1.0,
         reconnect_wait: float = 5.0,
+        client_id: str = None,
         debug: bool = False,
     ):
 
@@ -77,12 +76,19 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         self._loop_timeout = loop_timeout
         self._reconnect_wait = reconnect_wait
 
-        self._connect_wifi_task = None
+        self._client_id = client_id
 
         if debug:
             self._logger.setLevel(logging.DEBUG)
 
-    def add_connect_listener(self, callback) -> None:
+    @property
+    def client_id(self):
+        """
+        :return: the set client ID (or *None* if not set)
+        """
+        return self._client_id
+
+    def add_connect_listener(self, callback: Callable[bool]) -> None:
         self._connect_listeners.append(callback)
 
     async def _notify_connect_listeners(self, reconnect: bool):
@@ -93,7 +99,7 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         for l in self._connect_listeners:
             l(reconnect)
 
-    def add_disconnect_listener(self, callback) -> None:
+    def add_disconnect_listener(self, callback: Callable[None]) -> None:
         self._disconnect_listeners.append(callback)
 
     async def _notify_disconnect_listeners(self):
@@ -103,7 +109,7 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         for l in self._disconnect_listeners:
             l()
 
-    def subscribe(self, topic: str, callback) -> None:
+    def subscribe(self, topic: str, callback: Callable[str]) -> None:
         already_subbed = self._subscribers.get(topic)
         self._logger.debug(
             f"Adding sub to {topic} of {len(already_subbed) if already_subbed else 0}"
@@ -118,11 +124,11 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         # if this is a new subscription, add it to the client
         if needs_sub:
             self._logger.info(f"Subscribing to '{topic}'")
-            self._mqtt_client.subscribe(topic)
+            self.__mqtt_client.subscribe(topic)
 
-    def publish(self, topic: str, payload: str):
+    def publish(self, topic: str, payload: str, retain: bool = False, qos: int = 0):
         self._logger.debug(f"Appending '{topic}: {payload}")
-        self._publish_queue.append((topic, payload))
+        self._publish_queue.append((topic, payload, retain, qos))
 
     async def _connect_wifi(self):
         """
@@ -135,11 +141,9 @@ class CircuitPythonWrapper(MQTTClientWrapper):
                 f"Connected to WiFi - IP address: {wifi.radio.ipv4_address}"
             )
 
-    async def _client_loop(self, client):
+    async def _client_loop(self):
         """
         Execute the MQTT client loop (executes all the MQTT actions).
-
-        :param client: the client
         """
         while True:
             try:
@@ -149,18 +153,18 @@ class CircuitPythonWrapper(MQTTClientWrapper):
                 pub_copy.sort(reverse=True)
                 self._publish_queue.clear()
 
-                for topic, payload in pub_copy:
+                for topic, payload, retain, qos in pub_copy:
                     self._logger.debug(f"Pub to {topic} {payload}")
-                    client.publish(topic, payload)
+                    self.__mqtt_client.publish(topic, payload, retain, qos)
 
                 # execulte the client loop (send, receive, heartbeat)
-                client.loop(timeout=self._loop_timeout)
+                self.__mqtt_client.loop(timeout=self._loop_timeout)
                 await asyncio.sleep(self._loop_sleep)
             except (ValueError, RuntimeError) as e:
                 self._logger.exception(e)
                 await self._notify_disconnect_listeners()
                 await self._connect_wifi()
-                client.reconnect()
+                self.__mqtt_client.reconnect()
                 await self._notify_connect_listeners(False)
 
     async def start(self):
@@ -175,8 +179,11 @@ class CircuitPythonWrapper(MQTTClientWrapper):
 
         pool = socketpool.SocketPool(wifi.radio)
         self._logger.debug(f"Create MQTT client {self._broker}:{self._port}")
-        self._mqtt_client = MQTT.MQTT(
-            broker=self._broker, port=self._port, socket_pool=pool
+        self.__mqtt_client = MQTT.MQTT(
+            broker=self._broker,
+            port=self._port,
+            socket_pool=pool,
+            client_id=self._client_id,
         )
 
         def message_received(_, topic, message):
@@ -191,13 +198,13 @@ class CircuitPythonWrapper(MQTTClientWrapper):
                 for sub in sub_list:
                     sub(message)
 
-        self._mqtt_client.on_message = message_received
-        self._mqtt_client.connect()
+        self.__mqtt_client.on_message = message_received
+        self.__mqtt_client.connect()
         self._logger.info("MQTT connected")
 
         # don't care: this should run "forever"
         # pylint: disable=W0612
-        ignored = asyncio.create_task(self._client_loop(self._mqtt_client))
+        ignored = asyncio.create_task(self._client_loop())
 
 
 # pylint: disable=C0415,R0903
@@ -209,7 +216,7 @@ class HAMMFactory:
     @staticmethod
     def create_wrapper():
         """
-        Create a CirctuiPython wrapper for HA/mini-mqtt
+        Create a CircuitPython wrapper for HA/mini-mqtt
         :return: the wrapper
         """
         import os
@@ -219,10 +226,21 @@ class HAMMFactory:
         broker = os.getenv("HAMM_BROKER")
         port = int(os.getenv("HAMM_BROKER_PORT", "1883"))
 
-        loop_sleep = float(os.getenv("HAMM_LOOP_SLEEP", "1"))
+        # because is an automation device, a more aggressive loop is probably necessary
+        loop_sleep = float(os.getenv("HAMM_LOOP_SLEEP", "0.1"))
         loop_timeout = float(os.getenv("HAMM_LOOP_TIMEOUT", "1"))
         reconnect_delay = float(os.getenv("HAMM_RECONNECT_DELAY", "5"))
 
+        # identify the client, otherwise will use the CP default (which is kind of ugly)
+        client_id = os.getenv("HAMM_CLIENT_ID")
+
         return CircuitPythonWrapper(
-            ssid, password, broker, port, loop_sleep, loop_timeout, reconnect_delay
+            ssid,
+            password,
+            broker,
+            port,
+            loop_sleep,
+            loop_timeout,
+            reconnect_delay,
+            client_id,
         )

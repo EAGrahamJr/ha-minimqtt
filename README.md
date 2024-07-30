@@ -1,7 +1,7 @@
 # ha-minimqtt
 HomeAssistant abstraction for use with MQTT. **Specifically** aimed at using [CircuitPython](https://learn.adafruit.com/welcome-to-circuitpython) on microcontrollers with `asyncio` and `minimqtt`, but _should_ be playable on other platforms.
 
-<sup>_Note: I really juse wanted an "easy" learning IR remote, but not apprarenltly available oopen-source._</sup>
+<sup>_Note: I really just wanted an "easy" learning IR remote, but not apparently available open-source._</sup>
 
 * Defines HA _entities_ so that actual MQTT communication is abstracted
 * Uses the HA [discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) mechanism to register and un-register entities
@@ -20,9 +20,13 @@ HAMM_BROKRE="192.168.1.4"
 
 # default values
 HAMM_BROKER_PORT = 1883     # int
-HAMM_LOOP_SLEEP = 1.0       # seconds as float
+HAMM_LOOP_SLEEP = 0.1       # seconds as float
 HAMM_LOOP_TIMEOUT = 1.0     # seconds as float
 HAMM_RECONNECT_DELAY = 5.0  # seconds as float
+
+# if not set, will use CircuitPython defaults
+# (really should be set)
+HAMM_CLIENT_ID = "my_name"
 ```
 ### Sample Code
 1. Copy the `utils.py` file to your `CIRCUITPY` drive

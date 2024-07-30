@@ -411,6 +411,7 @@ class SwitchEntity(BaseEntity, CommandHandler):
     """
     Simple entity (and handler) that toggles a callback on and off.
     """
+
     _status = "OFF"
 
     def __init__(

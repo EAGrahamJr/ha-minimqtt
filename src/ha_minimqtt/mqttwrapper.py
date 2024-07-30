@@ -23,6 +23,7 @@
 """
 "Wrappers" (decorators) for MQTT clients.
 """
+from ha_minimqtt._compatibility import Callable
 
 
 class MQTTClientWrapper:
@@ -30,7 +31,7 @@ class MQTTClientWrapper:
     The basic wrapper definition.
     """
 
-    def add_connect_listener(self, callback) -> None:
+    def add_connect_listener(self, callback: Callable[bool]) -> None:
         """
         Add a callback for when the client is (re-)connected to the broker.
 
@@ -38,7 +39,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
-    def add_disconnect_listener(self, callback) -> None:
+    def add_disconnect_listener(self, callback: Callable[None]) -> None:
         """
         Add a callback for when the client is disconnected from the broker.
 
@@ -46,7 +47,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
-    def subscribe(self, topic: str, callback) -> None:
+    def subscribe(self, topic: str, callback: Callable[str]) -> None:
         """
         Subscribes a particular callback method to a topic.
 
@@ -57,7 +58,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
-    def publish(self, topic: str, payload: str):
+    def publish(self, topic: str, payload: str, retain: bool = False, qos: int = 0):
         """
         Pushes a string payload to the topic.
 
@@ -65,5 +66,7 @@ class MQTTClientWrapper:
 
         :param topic: the topic
         :param payload: the payload
+        :param retain: option to "retain" the message (persistent), default is *False*
+        :param qos: option to set delivery QoS, default is *0*
         """
         raise NotImplementedError
