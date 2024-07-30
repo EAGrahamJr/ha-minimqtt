@@ -28,6 +28,7 @@ import adafruit_pixelbuf
 from ha_minimqtt.color_util import parse_color
 from ha_minimqtt.lights import RGBHandler
 
+
 # pylint: disable=W0223:
 class NeoPixelHandler(RGBHandler):
     """

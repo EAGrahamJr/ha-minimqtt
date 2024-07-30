@@ -39,10 +39,15 @@ except ImportError:
 
 
 try:
-    from typing import List
+    from typing import List, Callable
 except ImportError:
 
     class List:
+        """
+        Fake
+        """
+
+    class Callable:
         """
         Fake
         """

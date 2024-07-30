@@ -26,7 +26,7 @@ provide the interactions with the underlying MQTT client wrapper.
 """
 import json
 
-from ha_minimqtt._compatibility import gethostname, ConstantList, logging
+from ha_minimqtt._compatibility import gethostname, ConstantList, logging, Callable
 from ha_minimqtt.mqttwrapper import MQTTClientWrapper
 
 # This is the default MQTT topic prefix -- you probably do not want to use it.
@@ -82,10 +82,10 @@ class CommandHandler:
         Process this command.
 
         This should "block" until the execution finishes. Errors *should* be trapped, otherwise
-        they will be relegated to the MQTT client wrapper.
+        they will be relegated to the MQTT client wrapper. Any state change **must** be reflected
+        in the next (and subsequent) *current_state* requests.
 
         :param payload: a payload supposedly specific to this entity.
-        :return: None
         """
         raise NotImplementedError
 
@@ -405,3 +405,30 @@ class TextEntity(BaseEntity):
 
         super().__init__("text", unique_id, name, device, handler)
         self.icon = "mdi:text"
+
+
+class SwitchEntity(BaseEntity, CommandHandler):
+    """
+    Simple entity (and handler) that toggles a callback on and off.
+    """
+    _status = "OFF"
+
+    def __init__(
+        self,
+        unique_id: str,
+        name: str,
+        device: DeviceIdentifier,
+        callback: Callable[[bool], None],
+    ):
+        if not callback:
+            raise ValueError("A callback 'func(bool)' must be defined")
+
+        super().__init__("text", unique_id, name, device, self)
+        self._callback = callback
+
+    def handle_command(self, payload: str):
+        self._callback(payload == "ON")
+        self._status = "ON" if payload == "ON" else "OFF"
+
+    def current_state(self) -> str:
+        return self._status

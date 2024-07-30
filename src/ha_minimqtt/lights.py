@@ -35,6 +35,7 @@ from ha_minimqtt.color_util import (
     cct_to_rgb,
 )
 
+
 class ColorMode(ConstantList):
     """
     Supported modes.
@@ -74,6 +75,7 @@ class ColorMode(ConstantList):
             if s in (ColorMode.HUE_SAT, ColorMode.XY, ColorMode.WHITE):
                 raise ValueError("'s' is currently not supported.")
         # only allow one of RGB, RGBW, or RGBWW?
+
 
 # pylint: disable=W0223,W1203
 class LightHandler(CommandHandler):

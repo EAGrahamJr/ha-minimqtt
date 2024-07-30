@@ -52,6 +52,6 @@ EXAMPLES_TOPIC = "kobots_ha/examples"
 # common "device" for testing/examples
 my_device = DeviceIdentifier("kobots", "QtPy ESP32 S3", identifier="i-spy")
 
-# comman wrapper
+# common wrapper
 wrapper = HAMMFactory.create_wrapper()
 wrapper._logger.setLevel(logging.INFO)

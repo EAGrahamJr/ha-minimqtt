@@ -24,7 +24,7 @@ from typing import List
 from base import TestBase, TEST_DEVICE
 from unittest.mock import patch
 
-from ha_minimqtt import MQTTClientWrapper
+from ha_minimqtt import MQTTClientWrapper, SwitchEntity
 from ha_minimqtt.number import NumberCommandHandler, NumberEntity, NumericDevice
 from ha_minimqtt.select import SelectEntity, SelectHandler
 
@@ -127,3 +127,26 @@ class SelectEntityTest(TestBase):
         self.assertEqual("publish", sent_status_method[0])
         self.assertEqual(device._status_topic(), sent_status_method.args[0])
         self.assertEqual("Maybe", sent_status_method.args[1])
+
+
+class SwitchEntityTest(TestBase):
+    called = False
+
+    def call_me(self, on: bool):
+        self.called = on
+
+    @patch.object(MQTTClientWrapper, "add_connect_listener")
+    def test_swtich_turned_on(self, wrapper):
+        device = SwitchEntity("onner_offer", "Switch", TEST_DEVICE, self.call_me)
+        self.start_checks(device, wrapper)
+
+        self.command_handler("ON")
+        self.assertEqual("ON", device.current_state())
+        self.assertTrue(self.called)
+
+        # did the status fire?
+        sent_status_method = wrapper.method_calls[0]
+        wrapper.reset_mock()
+        self.assertEqual("publish", sent_status_method[0])
+        self.assertEqual(device._status_topic(), sent_status_method.args[0])
+        self.assertEqual("ON", sent_status_method.args[1])

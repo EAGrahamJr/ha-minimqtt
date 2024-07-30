@@ -81,7 +81,7 @@ def xy_to_cct(x, y) -> int:
     :return: light "temperature" in Kelvin
     """
     n = (x - 0.3320) / (0.1858 - y)
-    cct = 449 * (n ** 3) + 3525 * (n ** 2) + 6823.3 * n + 5520.33
+    cct = 449 * (n**3) + 3525 * (n**2) + 6823.3 * n + 5520.33
     return round(cct)
 
 
@@ -115,9 +115,9 @@ def cct_to_rgb(temp: int):
             blue = 138.5177312231 * math.log(blue) - 305.0447927307
     else:
         red = temp - 60.0
-        red = 329.698727446 * (red ** -0.1332047592)
+        red = 329.698727446 * (red**-0.1332047592)
         green = temp - 60.0
-        green = 288.1221695283 * (green ** -0.0755148492)
+        green = 288.1221695283 * (green**-0.0755148492)
         blue = 255.0
 
     return (__color_limit(red), __color_limit(green), __color_limit(blue))
