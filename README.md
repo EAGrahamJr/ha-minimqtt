@@ -42,12 +42,14 @@ HAMM_CLIENT_ID = "my_name"
 * [Select/Options](examples/select_logger.py)
 * [Text Entry](examples/text_me.py)
 
+Note that updating handlers/entities "states" via public methods _should_ follow up by **manually** invoking the entity `send_current_state`.
+
 ## Design Philosophy
 
 * This is **not** intended to replace [ESPHome](https://esphome.io/), but rather provide an easier _programming_ interface for HA.
 * It is primarily intended for the CircuitPython environment, but _should_ (?) work elsewhere.
 * * This module is heavily "class-based" as state needs to be preserved and consistent across all the things.
-* State should be settable from the system and should be appropriately formatted and "automagically" published to HA.
+* State should be settable from the system and should be appropriately formatted and "automagically" published to HA where possible.
 * Entities that _receive_ from HA should use delegation (e.g. `CommandHandler`) to interface with the other systems.
 * Everything is extensible: this is a _start_ -- I do not have all 20+ MQTT entities **currently** supported by HA, so ... have fun?
 

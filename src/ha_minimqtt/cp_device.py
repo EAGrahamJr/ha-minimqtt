@@ -53,10 +53,10 @@ class NeoPixelHandler(RGBHandler):
 
         # pass on special effects for now
 
-    def _is_on(self) -> bool:
+    def is_on(self) -> bool:
         return self._on_off
 
-    def _set_on(self, on: bool):
+    def set_on(self, on: bool):
         if on:
             # when turning it on, if "first time", bring it all the way on
             if self._last_color == self.BLACK:
@@ -68,10 +68,10 @@ class NeoPixelHandler(RGBHandler):
             self._pixels.fill(self.BLACK)
         self._on_off = on
 
-    def _get_brightness(self) -> int:
+    def get_brightness(self) -> int:
         return round(self._pixels.brightness * 255)
 
-    def _set_brightness(self, bright: int):
+    def set_brightness(self, bright: int):
         # no color, make it white
         if self._last_color == self.BLACK:
             self._last_color = self.WHITE
@@ -79,10 +79,10 @@ class NeoPixelHandler(RGBHandler):
         self._pixels.brightness = bright / 255.0
         self._on_off = True
 
-    def _get_color(self) -> tuple:
+    def get_color(self) -> tuple:
         return self._last_color
 
-    def _set_color(self, **kwargs):
+    def set_color(self, **kwargs):
         self._last_color = parse_color(**kwargs)
         self._pixels.fill(self._last_color)
         self._on_off = True

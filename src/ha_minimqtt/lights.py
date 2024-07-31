@@ -122,38 +122,38 @@ class LightHandler(CommandHandler):
 
         # otherwise more "boring" stuff
         else:
-            status = {"state": "ON" if self._is_on() else "OFF"}
+            status = {"state": "ON" if self.is_on() else "OFF"}
 
             if ColorMode.BRIGHTNESS in self._supports:
-                status["brightness"] = self._get_brightness()
+                status["brightness"] = self.get_brightness()
                 status["color_mode"] = ColorMode.BRIGHTNESS
 
             elif any(s in self._supports for s in ColorMode.DOES_COLOR):
                 status["color_mode"] = ColorMode.RGB
-                (r, g, b) = self._get_color()
+                (r, g, b) = self.get_color()
                 colors = {"r": r, "g": g, "b": b}
                 status["color"] = colors
 
                 # optionally allow for a brightness status value
                 try:
-                    status["brightness"] = self._get_brightness()
+                    status["brightness"] = self.get_brightness()
                 except NotImplementedError:
                     pass
 
                 # a lot of RGB stuff will also support temperatures,
                 # so add it if available or calculate
                 if ColorMode.COLOR_TEMP in self._supports:
-                    status["color_temp"] = self._get_color_temp()
+                    status["color_temp"] = self.get_color_temp()
                 else:
                     status["color_temp"] = rgb_to_mireds(color=(r, g, b))
 
             elif ColorMode.COLOR_TEMP in self._supports:
                 status["color_mode"] = ColorMode.COLOR_TEMP
-                status["color_temp"] = self._get_color_temp()
+                status["color_temp"] = self.get_color_temp()
 
                 # optionally allow for a brightness status value
                 try:
-                    status["brightness"] = self._get_brightness()
+                    status["brightness"] = self.get_brightness()
                 except NotImplementedError:
                     pass
             elif ColorMode.HUE_SAT in self._supports:
@@ -179,54 +179,54 @@ class LightHandler(CommandHandler):
         # effects have basic priority here
         if self._effects and "effect" in command:
             self._current_effect = command["effect"]
-            self._execute_effect(self._current_effect)
+            self.execute_effect(self._current_effect)
         # otherwise boring stuff
         else:
             if "color" in command:
                 colors = command["color"]
                 if "r" in colors and "g" in colors and "b" in colors:
-                    self._set_color(r=colors["r"], g=colors["g"], b=colors["b"])
+                    self.set_color(r=colors["r"], g=colors["g"], b=colors["b"])
                 else:
                     self._logger.warning(f"Unknown colors: {colors}")
             elif "color_temp" in command:
                 mireds = command["color_temp"]
-                self._set_color_temp(mireds)
+                self.set_color_temp(mireds)
             elif "brightness" in command:
-                self._set_brightness(command["brightness"])
+                self.set_brightness(command["brightness"])
             elif "state" in command:
-                self._set_on(command["state"] == "ON")
+                self.set_on(command["state"] == "ON")
 
-    def _is_on(self) -> bool:
+    def is_on(self) -> bool:
         """
         :return: True if *on*, False otherwise
         """
         raise NotImplementedError("No value")
 
-    def _set_on(self, on: bool):
+    def set_on(self, on: bool):
         """
         :param on: True if *on*, False otherwise
         """
         raise NotImplementedError("Needs implementation")
 
-    def _get_brightness(self) -> int:
+    def get_brightness(self) -> int:
         """
         :return: how bright the light is (0-255)
         """
         raise NotImplementedError("No value")
 
-    def _set_brightness(self, bright: int) -> int:
+    def set_brightness(self, bright: int) -> int:
         """
         :param bright: how bright the light is (0-255)
         """
         raise NotImplementedError("Requires value 0-255")
 
-    def _get_color(self) -> tuple:
+    def get_color(self) -> tuple:
         """
         :return: the current color in as a tuple of (red, green, blue)
         """
         raise NotImplementedError("No value")
 
-    def _set_color(self, **kwargs):
+    def set_color(self, **kwargs):
         """
         Sets color
 
@@ -239,19 +239,19 @@ class LightHandler(CommandHandler):
         """
         raise NotImplementedError("Requires values of r,g,b values 0-255")
 
-    def _get_color_temp(self) -> int:
+    def get_color_temp(self) -> int:
         """
         :return: the current color temperature in nireds
         """
         raise NotImplementedError("Requires a temperature in Kelvin")
 
-    def _set_color_temp(self, temp: int):
+    def set_color_temp(self, temp: int):
         """
         :param temp: the color temperature in mireds
         """
         raise NotImplementedError("Requires a temperature in Kelvin")
 
-    def _execute_effect(self, effect: str):
+    def execute_effect(self, effect: str):
         """
         :param effect: do this thing -- **might** be blocking
         """
@@ -295,28 +295,28 @@ class RGBHandler(LightHandler):
         """
         super().__init__(self.MODES, effects)
 
-    def _is_on(self) -> bool:
-        return self._get_brightness() != 0 and self._get_color() != self.BLACK
+    def is_on(self) -> bool:
+        return self.get_brightness() != 0 and self.get_color() != self.BLACK
 
-    def _set_on(self, on: bool):
-        self._set_color(color=self.WHITE if on else self.BLACK)
+    def set_on(self, on: bool):
+        self.set_color(color=self.WHITE if on else self.BLACK)
 
-    def _get_brightness(self) -> int:
-        return rgb_to_brightness(color=self._get_color())
+    def get_brightness(self) -> int:
+        return rgb_to_brightness(color=self.get_color())
 
-    def _set_brightness(self, bright: int):
+    def set_brightness(self, bright: int):
         # adjust the current color or, if off, based on white
-        adjust_this = self._get_color() if self._is_on() else self.WHITE
+        adjust_this = self.get_color() if self.is_on() else self.WHITE
         adjust_by = bright / 255.0
         r = round(adjust_this[0] * adjust_by)
         g = round(adjust_this[1] * adjust_by)
         b = round(adjust_this[2] * adjust_by)
-        self._set_color(color=(r, g, b))
+        self.set_color(color=(r, g, b))
 
-    def _get_color_temp(self) -> int:
-        return rgb_to_mireds(color=self._get_color())
+    def get_color_temp(self) -> int:
+        return rgb_to_mireds(color=self.get_color())
 
-    def _set_color_temp(self, temp: int):
+    def set_color_temp(self, temp: int):
         k = mireds_to_cct(temp)
         color = cct_to_rgb(k)
-        self._set_color(color=color)
+        self.set_color(color=color)

@@ -31,7 +31,7 @@ class MQTTClientWrapper:
     The basic wrapper definition.
     """
 
-    def add_connect_listener(self, callback: Callable[bool]) -> None:
+    def add_connect_listener(self, callback: Callable[[bool], None]) -> None:
         """
         Add a callback for when the client is (re-)connected to the broker.
 
@@ -39,7 +39,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
-    def add_disconnect_listener(self, callback: Callable[None]) -> None:
+    def add_disconnect_listener(self, callback: Callable[[None], None]) -> None:
         """
         Add a callback for when the client is disconnected from the broker.
 
@@ -47,7 +47,7 @@ class MQTTClientWrapper:
         """
         raise NotImplementedError
 
-    def subscribe(self, topic: str, callback: Callable[str]) -> None:
+    def subscribe(self, topic: str, callback: Callable[[str], None]) -> None:
         """
         Subscribes a particular callback method to a topic.
 

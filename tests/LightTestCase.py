@@ -53,13 +53,13 @@ class TestHandler(RGBHandler):
     def __init__(self):
         super().__init__(self.effects)
 
-    def _get_color(self) -> tuple:
+    def get_color(self) -> tuple:
         return self._test_state
 
-    def _set_color(self, **kwargs):
+    def set_color(self, **kwargs):
         self._test_state = parse_color(**kwargs)
 
-    def _execute_effect(self, effect: str):
+    def execute_effect(self, effect: str):
         self._ce = effect
         if "fade" in effect:
             sleep(5)
