@@ -25,7 +25,7 @@
 import adafruit_logging as logging
 import asyncio
 
-from ha_minimqtt._compatibility import List
+from ha_minimqtt.compatibility import List
 from ha_minimqtt.select import SelectHandler, SelectEntity
 from utils import my_device, EXAMPLES_TOPIC, wrapper
 

@@ -27,7 +27,7 @@ Defines basic lighting entities.
 import json
 
 from ha_minimqtt import ConstantList, CommandHandler, BaseEntity, DeviceIdentifier
-from ha_minimqtt._compatibility import List, logging
+from ha_minimqtt.compatibility import List, logging
 from ha_minimqtt.color_util import (
     mireds_to_cct,
     rgb_to_brightness,

@@ -23,7 +23,7 @@
 """
 Numeric entity: reports and responds to "number" commands.
 """
-from ha_minimqtt._compatibility import ConstantList, logging
+from ha_minimqtt.compatibility import ConstantList, logging
 from ha_minimqtt import (
     BaseEntity,
     DeviceIdentifier,

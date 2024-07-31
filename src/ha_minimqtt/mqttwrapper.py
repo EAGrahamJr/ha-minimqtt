@@ -23,7 +23,7 @@
 """
 "Wrappers" (decorators) for MQTT clients.
 """
-from ha_minimqtt._compatibility import Callable
+from ha_minimqtt.compatibility import Callable
 
 
 class MQTTClientWrapper:

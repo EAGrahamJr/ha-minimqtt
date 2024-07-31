@@ -34,7 +34,7 @@ import asyncio
 import wifi
 import socketpool
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
-from ha_minimqtt._compatibility import logging, Callable
+from ha_minimqtt.compatibility import logging, Callable
 from ha_minimqtt import MQTTClientWrapper
 
 

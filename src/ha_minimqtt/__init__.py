@@ -26,7 +26,7 @@ provide the interactions with the underlying MQTT client wrapper.
 """
 import json
 
-from ha_minimqtt._compatibility import gethostname, ConstantList, logging, Callable
+from ha_minimqtt.compatibility import gethostname, ConstantList, logging, Callable
 from ha_minimqtt.mqttwrapper import MQTTClientWrapper
 
 # This is the default MQTT topic prefix -- you probably do not want to use it.
