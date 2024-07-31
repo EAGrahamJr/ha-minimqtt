@@ -1,5 +1,5 @@
 #!/bin/sh
 
 TARGET="/media/$(id -u -n)/CIRCUITPY"
-find . -name __pycache__ src --exec rm -rf {} \;
+find src -name __pycache__ -exec rm -rf {} \;
 cp -av src/ha_minimqtt $TARGET

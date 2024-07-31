@@ -48,7 +48,6 @@ class NeoPixelHandler(RGBHandler):
         super().__init__()
         self._pixels = pixelbuf
         self._pixels.fill(self.BLACK)
-        self._pixels.brightness = 0
         self._last_color = self.BLACK
 
         # pass on special effects for now
