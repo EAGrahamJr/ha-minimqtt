@@ -45,44 +45,41 @@ class Colors:
     BLUE = (0, 0, 255)
 
 
-class TestHandler(RGBHandler):
-    _test_state = Colors.BLACK
-    effects = ["blink", "pulse", "fade_on", "fade_off"]
-    _ce = None
+class MockHandler(RGBHandler):
+    __test__ = False
+    effects = ["blink", "breathe"]
 
     def __init__(self):
-        super().__init__(self.effects)
+        super().__init__(effects=self.effects)
+        self.rgb = (0, 0, 0)
 
-    def get_color(self) -> tuple:
-        return self._test_state
+    def get_color(self):
+        return self.rgb
 
-    def set_color(self, **kwargs):
-        self._test_state = parse_color(**kwargs)
-
-    def execute_effect(self, effect: str):
-        self._ce = effect
-        if "fade" in effect:
-            sleep(5)
+    def set_color(self, color):
+        self.rgb = color
 
 
-class LightTest(TestBase):
-    @staticmethod
-    def create_device():
-        return LightEntity("night_light", "Night Light", TEST_DEVICE, TestHandler())
+class LightTestCase(TestBase):
+    def setUp(self):
+        self.device = LightEntity("night_light", "Night Light", TEST_DEVICE, MockHandler())
+
+    def tearDown(self):
+        pass
 
     @patch.object(MQTTClientWrapper, "add_connect_listener")
     def test_discovery_payload(self, wrapper):
-        disco = self.start_checks(self.create_device(), wrapper)
+        disco = self.start_checks(self.device, wrapper)
 
         # check for additional information
         self.assertTrue(disco["brightness"])
         self.assertEqual(RGBHandler.MODES, disco["supported_color_modes"])
         self.assertTrue(disco["effects"])
-        self.assertEqual(TestHandler.effects, disco["effect_list"])
+        self.assertEqual(MockHandler.effects, disco["effect_list"])
 
     @patch.object(MQTTClientWrapper, "add_connect_listener")
     def test_light_on(self, wrapper):
-        light = self.create_device()
+        light = self.device
         self.start_checks(light, wrapper)
 
         # send a command to the captured handler
@@ -107,7 +104,7 @@ class LightTest(TestBase):
 
     @patch.object(MQTTClientWrapper, "add_connect_listener")
     def test_light_dimmed(self, wrapper):
-        light = self.create_device()
+        light = self.device
         self.start_checks(light, wrapper)
 
         # send a command to the captured handler
@@ -135,7 +132,7 @@ class LightTest(TestBase):
     def test_light_set_temp(self, wrapper):
         # Note: varying aglorightms produce slightly different rounding errors, so ranges are
         # checked here
-        light = self.create_device()
+        light = self.device
         self.start_checks(light, wrapper)
 
         # send a command to the captured handler

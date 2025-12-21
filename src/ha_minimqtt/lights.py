@@ -77,7 +77,6 @@ class ColorMode(ConstantList):
         # only allow one of RGB, RGBW, or RGBWW?
 
 
-# pylint: disable=W0223,W1203
 class LightHandler(CommandHandler):
     """
     Handles basic lighting interface.
@@ -86,7 +85,7 @@ class LightHandler(CommandHandler):
     messages. Child-implementations of **this** class should fill in the missing details, obviously.
     """
 
-    def __init__(self, supports: List[str], effects: List[str] = None):
+    def __init__(self, supports: List[str], effects: List[str]|None = None):
         """
         Create a basic handler that supports color modes.
 
@@ -116,6 +115,7 @@ class LightHandler(CommandHandler):
         :return: JSON payload as string
         """
 
+        status: dict[str, object] = {}
         # if effects are supported, which one is running?
         if self._effects and self._current_effect:
             status = {"effect": self._current_effect, "state": "ON"}
@@ -130,7 +130,7 @@ class LightHandler(CommandHandler):
 
             elif any(s in self._supports for s in ColorMode.DOES_COLOR):
                 status["color_mode"] = ColorMode.RGB
-                (r, g, b) = self.get_color()
+                (r, g, b) = self.get_color() or (0, 0, 0)
                 colors = {"r": r, "g": g, "b": b}
                 status["color"] = colors
 
@@ -214,13 +214,13 @@ class LightHandler(CommandHandler):
         """
         raise NotImplementedError("No value")
 
-    def set_brightness(self, bright: int) -> int:
+    def set_brightness(self, bright: int) -> None:
         """
         :param bright: how bright the light is (0-255)
         """
         raise NotImplementedError("Requires value 0-255")
 
-    def get_color(self) -> tuple:
+    def get_color(self) -> tuple[int, int, int] | None:
         """
         :return: the current color in as a tuple of (red, green, blue)
         """
@@ -288,7 +288,7 @@ class RGBHandler(LightHandler):
     BLACK = (0, 0, 0)
     MODES = [ColorMode.RGB, ColorMode.COLOR_TEMP]
 
-    def __init__(self, effects: List[str] = None):
+    def __init__(self, effects: List[str]|None = None):
         """
         Sets color mode to RGB and temp (brightness and off/on assumed via HA)
         :param effects:
@@ -307,6 +307,8 @@ class RGBHandler(LightHandler):
     def set_brightness(self, bright: int):
         # adjust the current color or, if off, based on white
         adjust_this = self.get_color() if self.is_on() else self.WHITE
+        if adjust_this is None:
+            adjust_this = self.WHITE
         adjust_by = bright / 255.0
         r = round(adjust_this[0] * adjust_by)
         g = round(adjust_this[1] * adjust_by)

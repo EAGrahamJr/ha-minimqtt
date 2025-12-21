@@ -37,7 +37,7 @@ class NeoPixelHandler(RGBHandler):
     """
 
     _last_brightness = 0
-    _last_color = None
+    _last_color: tuple[int, int, int] | None = None
     _on_off = False
 
     def __init__(self, pixelbuf: adafruit_pixelbuf.PixelBuf):
@@ -78,7 +78,7 @@ class NeoPixelHandler(RGBHandler):
         self._pixels.brightness = bright / 255.0
         self._on_off = True
 
-    def get_color(self) -> tuple:
+    def get_color(self) -> tuple[int, int, int] | None:
         return self._last_color
 
     def set_color(self, **kwargs):

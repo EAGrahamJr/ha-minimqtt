@@ -163,7 +163,7 @@ class NumberEntity(BaseEntity):
         handler: NumberCommandHandler,
         device_class: str = NumericDevice.NONE,
         mode: str = NumberDisplayMode.AUTO,
-        unit_of_measurement: str = None,
+        unit_of_measurement: str| None = None,
     ):
         """
         Creates a `Number <https://www.home-assistant.io/integrations/number.mqtt/>`_ entity.

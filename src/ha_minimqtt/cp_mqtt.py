@@ -45,7 +45,7 @@ class CircuitPythonWrapper(MQTTClientWrapper):
     that have multiple uses for the radio. See HAMMFactory for an environment-based factory.
     """
 
-    __mqtt_client = None
+    __mqtt_client: MQTT.MQTT
 
     _publish_queue = []
     _subscribers = {}
@@ -54,7 +54,6 @@ class CircuitPythonWrapper(MQTTClientWrapper):
 
     _logger = logging.getLogger("CircuitPythonMiniMqttWrapper")
 
-    # pylint: disable=R0913
     def __init__(
         self,
         ssid: str,
@@ -64,7 +63,7 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         loop_sleep: float = 1.0,
         loop_timeout: float = 1.0,
         reconnect_wait: float = 5.0,
-        client_id: str = None,
+        client_id: str|None = None,
         debug: bool = False,
     ):
 
@@ -88,7 +87,7 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         """
         return self._client_id
 
-    def add_connect_listener(self, callback: Callable[bool]) -> None:
+    def add_connect_listener(self, callback: Callable[[bool], None]) -> None:
         self._connect_listeners.append(callback)
 
     async def _notify_connect_listeners(self, reconnect: bool):
@@ -96,20 +95,20 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         Execute all the "connect" call-backs
         :param reconnect: whether first time or not
         """
-        for l in self._connect_listeners:
-            l(reconnect)
+        for listener in self._connect_listeners:
+            listener(reconnect)
 
-    def add_disconnect_listener(self, callback: Callable[None]) -> None:
+    def add_disconnect_listener(self, callback: Callable[[None], None]) -> None:
         self._disconnect_listeners.append(callback)
 
     async def _notify_disconnect_listeners(self):
         """
         Execute all the "disconnect" call-backs
         """
-        for l in self._disconnect_listeners:
-            l()
+        for listener in self._disconnect_listeners:
+            listener()
 
-    def subscribe(self, topic: str, callback: Callable[str]) -> None:
+    def subscribe(self, topic: str, callback: Callable[[str], None]) -> None:
         already_subbed = self._subscribers.get(topic)
         self._logger.debug(
             f"Adding sub to {topic} of {len(already_subbed) if already_subbed else 0}"
@@ -203,11 +202,9 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         self._logger.info("MQTT connected")
 
         # don't care: this should run "forever"
-        # pylint: disable=W0612
-        ignored = asyncio.create_task(self._client_loop())
+        asyncio.create_task(self._client_loop())
 
 
-# pylint: disable=C0415,R0903
 class HAMMFactory:
     """
     Creates the above wrapper using the ENV and some defaults.

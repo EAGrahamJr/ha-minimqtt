@@ -77,8 +77,8 @@ class BinarySensor(BaseEntity):
         name: str,
         device: DeviceIdentifier,
         device_class: str = BinaryDevice.NONE,
-        expires: int = None,
-        off_delay: int = None,
+        expires: int | None = None,
+        off_delay: int | None = None,
     ):
         """
         Creates a `Binary Sensor <https://www.home-assistant.io/integrations/binary_sensor.mqtt/>`_
@@ -231,10 +231,10 @@ class AnalogSensor(BaseEntity):
         name: str,
         device: DeviceIdentifier,
         device_class: str = AnalogDevice.NONE,
-        expires: int = None,
-        state_class: str = None,
-        unit_of_measurement: str = None,
-        suggested_precision: int = None,
+        expires: int | None = None,
+        state_class: str | None = None,
+        unit_of_measurement: str | None = None,
+        suggested_precision: int | None = None,
     ):
         """
         Creates an `Analog Sensor <https://www.home-assistant.io/integrations/sensor.mqtt/>`_

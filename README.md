@@ -14,11 +14,22 @@ HomeAssistant abstraction for use with MQTT. **Specifically** aimed at using [Ci
 
 The [CircuitPython Client](src/ha_minimqtt/cp_mqtt.py) contains a static factory that creates a "wrapper" that can be used with the HA entities.
 
+**NOTE** This client also manages a `wifi` connection, so if there is another item in your project that uses the radio, that code can ensure a connection with:
+
+```python
+import ha_minimqtt.cp_mqtt.CircuitPythonWrapper
+
+def my_code(wrapper:CircuitPythonWrapper):
+  wrapper.connect_wifi()
+  # do stuff
+
+```
+
 ### Sample `settings.toml`
 ```toml
 CIRCUITPY_WIFI_SSID="MY SSID"
 CIRCUITPY_WIFI_PASSWORD="MY PASSWORD"
-HAMM_BROKRE="192.168.1.4"
+HAMM_BROKER="192.168.1.4"
 
 # default values
 HAMM_BROKER_PORT = 1883     # int

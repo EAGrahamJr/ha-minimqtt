@@ -2,7 +2,7 @@
 name = "ha-minimqtt"
 version = "0.0.1"
 authors = [
-    { name="E.A. Graham, Jr.", email="https://github.com/EAGrahamJr/ha-minimqtt/discussions" },
+    { name="E.A. Graham, Jr." },
 ]
 description = "Home-Assistant MQTT client and devices for CircuitPython"
 readme = "README.md"
@@ -12,7 +12,22 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: CircuitPython",
 ]
+dependencies = [
+    "adafruit-circuitpython-minimqtt>=8.0.3",
+    "adafruit-circuitpython-pixelbuf>=2.0.10",
+]
 
 [project.urls]
 Homepage = "https://github.com/EAGrahamJr/ha-minimqtt"
 Issues = "https://github.com/EAGrahamJr/ha-minimqtt/issues"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "ruff>=0.14.10",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+

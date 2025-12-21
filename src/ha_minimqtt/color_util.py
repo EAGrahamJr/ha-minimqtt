@@ -95,14 +95,14 @@ def cct_to_mireds(cct: int) -> int:
     return round(1_000_000 / cct)
 
 
-def cct_to_rgb(temp: int):
+def cct_to_rgb(temperature: int):
     """
     Convert (roughly) CCT (Kelvin) to RGB
-    :param temp: degrees
+    :param temperature: degrees
     :return: tuple of R,G,B
     """
 
-    temp = max(1000, min(temp, 40000)) / 100.0
+    temp = max(1000, min(temperature, 40000)) / 100.0
 
     if temp <= 66.0:
         red = 255.0
