@@ -24,6 +24,7 @@
 The root of all evil that is this module. All entities derive from these "base" classes, which
 provide the interactions with the underlying MQTT client wrapper.
 """
+
 import json
 
 from ha_minimqtt.compatibility import gethostname, ConstantList, logging, Callable

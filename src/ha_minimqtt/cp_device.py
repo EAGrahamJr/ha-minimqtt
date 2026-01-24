@@ -23,6 +23,7 @@
 """
 Classes for Adafruit CircuitPython specific integrations.
 """
+
 import adafruit_pixelbuf
 
 from ha_minimqtt.color_util import parse_color

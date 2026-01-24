@@ -173,7 +173,7 @@ wheels = [
 [[package]]
 name = "ha-minimqtt"
 version = "0.0.1"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "adafruit-circuitpython-minimqtt" },
     { name = "adafruit-circuitpython-pixelbuf" },

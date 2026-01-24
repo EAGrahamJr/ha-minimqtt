@@ -63,10 +63,9 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         loop_sleep: float = 1.0,
         loop_timeout: float = 1.0,
         reconnect_wait: float = 5.0,
-        client_id: str|None = None,
+        client_id: str | None = None,
         debug: bool = False,
     ):
-
         self._ssid = ssid
         self._password = password
         self._broker = broker
@@ -146,7 +145,6 @@ class CircuitPythonWrapper(MQTTClientWrapper):
         """
         while True:
             try:
-
                 # publish anything in the queue, FIFO
                 pub_copy = self._publish_queue.copy()
                 pub_copy.sort(reverse=True)
