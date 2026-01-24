@@ -289,7 +289,7 @@ class BaseEntity:
             self._logger.info("Connecting - reconnect %r", reconnect)
             self.redo_connection()
 
-        def on_disconnect():
+        def on_disconnect(_: None):
             self._connected = False
 
         def on_homeassistant_status(message: str):
@@ -298,9 +298,6 @@ class BaseEntity:
             else:
                 self._connected = False
 
-        wrapper.add_connect_listener(on_connect)
-        wrapper.add_disconnect_listener(on_disconnect)
-        wrapper.subscribe("homeassistant/status", on_homeassistant_status)
 
         ## if there's a handler, wire it in
         if self._command_handler:
@@ -317,6 +314,11 @@ class BaseEntity:
 
         # assume ready to go
         self.redo_connection()
+
+        wrapper.add_connect_listener(on_connect)
+        wrapper.add_disconnect_listener(on_disconnect)
+        wrapper.subscribe("homeassistant/status", on_homeassistant_status)
+
 
     def redo_connection(self):
         """
