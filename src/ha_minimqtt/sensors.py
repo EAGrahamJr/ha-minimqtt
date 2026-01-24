@@ -23,6 +23,7 @@
 """
 Basic "sensor" definitions -- either on/off or send a number.
 """
+
 from ha_minimqtt.compatibility import ConstantList
 
 from ha_minimqtt import BaseEntity, DeviceIdentifier, DeviceClass

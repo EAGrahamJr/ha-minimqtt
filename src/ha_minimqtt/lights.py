@@ -85,7 +85,7 @@ class LightHandler(CommandHandler):
     messages. Child-implementations of **this** class should fill in the missing details, obviously.
     """
 
-    def __init__(self, supports: List[str], effects: List[str]|None = None):
+    def __init__(self, supports: List[str], effects: List[str] | None = None):
         """
         Create a basic handler that supports color modes.
 
@@ -288,7 +288,7 @@ class RGBHandler(LightHandler):
     BLACK = (0, 0, 0)
     MODES = [ColorMode.RGB, ColorMode.COLOR_TEMP]
 
-    def __init__(self, effects: List[str]|None = None):
+    def __init__(self, effects: List[str] | None = None):
         """
         Sets color mode to RGB and temp (brightness and off/on assumed via HA)
         :param effects:
