@@ -10,7 +10,7 @@ HomeAssistant abstraction for use with MQTT. **Specifically** aimed at using [Ci
   * Allows use with things like _asyncio_ without modifying entities
   * Testing!
 
-## How to Use This Library
+## How to Use This Library: CircuitPython
 
 The [CircuitPython Client](src/ha_minimqtt/cp_mqtt.py) contains a static factory that creates a "wrapper" that can be used with the HA entities.
 
@@ -41,6 +41,21 @@ HAMM_RECONNECT_DELAY = 5.0  # seconds as float
 # (really should be set)
 HAMM_CLIENT_ID = "my_name"
 ```
+
+## How to Use This Library: Raspberry Pi, etc.
+
+Simiarly to the CP version above, the [Pi Client](src/ha_minimqtt/pi_mqtt.py) has it's own factory that uses a `settings.properties` file to set up the broker connection. Because this relies on the OS supplying the network connection, it only requires these settings:
+
+```
+HAMM_BROKER="192.168.1.4"
+# HAMM_BROKER_PORT=1883
+HAMM_CLIENT_ID="zeke"
+```
+
+The broker property will also accept various "standard" `protocol://host:port` for MQTT.
+
+**NOTE** This factory requires the `paho-mqtt` library installed in the virtual environment for the application.
+
 ### Sample Code
 1. Copy the `utils.py` file to your `CIRCUITPY` drive
 2. Copy the appropriate example file to `CIRCUITPY/code.py`

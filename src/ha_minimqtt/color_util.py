@@ -158,18 +158,18 @@ def rgb_to_mireds(**kwargs) -> int:
 
 def rgb_to_brightness(**kwargs) -> int:
     """
-    Averages the relative brightness of the color components.
+    Defines the relative brightness by using the maximum of the color components.
 
     Parameters are r,g,b as ints, or color as a tuple
     :param r: red 0-255
     :param g: green 0-255
     :param b: blue 0-255
     :param color: tuple of (r,g,b)
-    :return: simple "average" of relative color ratios as a "brightness"
+    :return: simple relative "brightness"
     """
     (r, g, b) = parse_color(**kwargs)
-
-    return round((r + g + b) / 3)
+    max_color = max(r, g, b)
+    return max_color
 
 
 def parse_color(**kwargs):
