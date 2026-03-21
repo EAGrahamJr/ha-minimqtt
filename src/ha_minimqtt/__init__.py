@@ -289,7 +289,7 @@ class BaseEntity:
             self._logger.info("Connecting - reconnect %r", reconnect)
             self.redo_connection()
 
-        def on_disconnect(_: None):
+        def on_disconnect():
             self._connected = False
 
         def on_homeassistant_status(message: str):
