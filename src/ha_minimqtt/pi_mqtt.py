@@ -8,13 +8,17 @@ from ha_minimqtt import MQTTClientWrapper
 import socket as skt
 from urllib.parse import urlparse
 
+
 class LinuxSocketPool:
     AF_INET = skt.AF_INET
     SOCK_STREAM = skt.SOCK_STREAM
 
     def socket(self, family=skt.AF_INET, type=skt.SOCK_STREAM, proto=0):
         return skt.socket(family, type, proto)
-    def getaddrinfo(self, host, port, family=skt.AF_INET, type=skt.SOCK_STREAM, proto=0, flags=0):
+
+    def getaddrinfo(
+        self, host, port, family=skt.AF_INET, type=skt.SOCK_STREAM, proto=0, flags=0
+    ):
         return skt.getaddrinfo(host, port, family, type, proto, flags)
 
 
@@ -23,6 +27,7 @@ def PiHAMMFactory():
     Creates a CircuitPython wrapper for a Raspberry Pi using a simple `settings.properties` file
     in lieu of environment variables.
     """
+
     def _clean_value(raw: str) -> str:
         value = raw.strip()
         if len(value) >= 2 and ((value[0] == value[-1]) and value[0] in ('"', "'")):
@@ -69,6 +74,7 @@ def PiHAMMFactory():
         client_id=client_id,
     )
 
+
 class PiPythonWrapper(MQTTClientWrapper):
     """
     CircuitPython wrapper for HA/mini-mqtt use on a Raspberry Pi. Similar to the
@@ -76,6 +82,7 @@ class PiPythonWrapper(MQTTClientWrapper):
 
     This requires the `paho-mqtt` library, which can be installed via `pip install paho-mqtt`.
     """
+
     __mqtt_client: mqtt.Client
 
     _subscribers = {}
@@ -86,7 +93,7 @@ class PiPythonWrapper(MQTTClientWrapper):
         self,
         broker: str,
         port: int = 1883,
-        client_id: str|None = None,
+        client_id: str | None = None,
     ):
         """
         Initialize the wrapper
@@ -110,7 +117,9 @@ class PiPythonWrapper(MQTTClientWrapper):
     def add_connect_listener(self, callback: Callable[[bool], None]) -> None:
         self._connect_listeners.append(callback)
 
-    def _notify_connect_listeners(self, client, userdata, flags, reason_code, properties):
+    def _notify_connect_listeners(
+        self, client, userdata, flags, reason_code, properties
+    ):
         """
         Execute all the "connect" call-backs
         :param reconnect: whether first time or not
@@ -127,7 +136,9 @@ class PiPythonWrapper(MQTTClientWrapper):
     def add_disconnect_listener(self, callback: Callable[[None], None]) -> None:
         self._disconnect_listeners.append(callback)
 
-    def _notify_disconnect_listeners(self, client, userdata, flags, reason_code, properties):
+    def _notify_disconnect_listeners(
+        self, client, userdata, flags, reason_code, properties
+    ):
         """
         Execute all the "disconnect" call-backs
         """
@@ -175,7 +186,7 @@ class PiPythonWrapper(MQTTClientWrapper):
         if self._client_id is not None:
             client_kwargs["client_id"] = self._client_id
 
-        self.__mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2) # type: ignore
+        self.__mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  # type: ignore
 
         def message_received(client, userdata, msg):
             topic = getattr(msg, "topic", "")

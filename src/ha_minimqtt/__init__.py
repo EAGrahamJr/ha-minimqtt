@@ -298,7 +298,6 @@ class BaseEntity:
             else:
                 self._connected = False
 
-
         ## if there's a handler, wire it in
         if self._command_handler:
 
@@ -318,7 +317,6 @@ class BaseEntity:
         wrapper.add_connect_listener(on_connect)
         wrapper.add_disconnect_listener(on_disconnect)
         wrapper.subscribe("homeassistant/status", on_homeassistant_status)
-
 
     def redo_connection(self):
         """
