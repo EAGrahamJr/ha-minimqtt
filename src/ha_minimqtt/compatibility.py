@@ -78,9 +78,9 @@ class ConstantList:
         """
         things = list(
             filter(
-                lambda s: not s.endswith("__")
-                and not s.startswith("_")
-                and s != "list",
+                lambda s: (
+                    not s.endswith("__") and not s.startswith("_") and s != "list"
+                ),
                 dir(cls),
             )
         )

@@ -62,7 +62,9 @@ class MockHandler(RGBHandler):
 
 class LightTestCase(TestBase):
     def setUp(self):
-        self.device = LightEntity("night_light", "Night Light", TEST_DEVICE, MockHandler())
+        self.device = LightEntity(
+            "night_light", "Night Light", TEST_DEVICE, MockHandler()
+        )
 
     def tearDown(self):
         pass

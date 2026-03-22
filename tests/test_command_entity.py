@@ -76,7 +76,9 @@ class NumberEntityTest(TestBase):
         self.start_checks(device, wrapper)
 
         # note this was pulled from the discovery subscription, so it should react to a "message"
-        assert self.command_handler is not None, "command_handler should be set by start_checks"
+        assert self.command_handler is not None, (
+            "command_handler should be set by start_checks"
+        )
         self.command_handler("50")
         self.assertEqual("50", self.mock_handler.current_state())
 
@@ -119,7 +121,9 @@ class SelectEntityTest(TestBase):
         self.start_checks(device, wrapper)
 
         # note this was pulled from the discovery subscription, so it should react to a "message"
-        assert self.command_handler is not None, "command_handler should be set by start_checks"
+        assert self.command_handler is not None, (
+            "command_handler should be set by start_checks"
+        )
         self.command_handler("Maybe")
         self.assertEqual("Maybe", self.mock_handler.current_state())
 
@@ -142,7 +146,9 @@ class SwitchEntityTest(TestBase):
         device = SwitchEntity("onner_offer", "Switch", TEST_DEVICE, self.call_me)
         self.start_checks(device, wrapper)
 
-        assert self.command_handler is not None, "command_handler should be set by start_checks"
+        assert self.command_handler is not None, (
+            "command_handler should be set by start_checks"
+        )
         self.command_handler("ON")
         self.assertEqual("ON", device.current_state())
         self.assertTrue(self.called)
