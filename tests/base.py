@@ -33,8 +33,28 @@ class TestBase(unittest.TestCase):
 
     def start_checks(self, device, wrapper) -> dict:
         device.start(wrapper)
-        on_connect_method = wrapper.method_calls[0]
-        ha_subscribe_method = wrapper.method_calls[2]
+
+        first_publish = None
+        ha_subscribe_method = None
+        ha_command_method = None
+        on_connect_method = None
+        on_disconnect_method = None
+
+        for m in wrapper.method_calls:
+            name = str(m)
+            if "call.publish" in name:
+                first_publish = m
+            elif "call.subscribe" in name:
+                if "homeassistant/status" in name:
+                    ha_subscribe_method = m
+                else:
+                    ha_command_method = m
+            elif "call.add_connect_listener" in name:
+                on_connect_method = m
+            elif "call.add_disconnect_listener" in name:
+                on_disconnect_method = m
+
+        # print(f"debug this {wrapper.method_calls}")
 
         self.assertEqual(
             "homeassistant/status",
@@ -46,23 +66,18 @@ class TestBase(unittest.TestCase):
 
         # check subscribe to comannd topic
         if device._command_handler:
-            sub_command_method = wrapper.method_calls[3]
-            self.assertEqual("subscribe", sub_command_method[0])
             self.assertEqual(
                 f"{device._topic_prefix}/{device._unique_id}/set",
-                sub_command_method.args[0],
+                ha_command_method.args[0],
             )
-            self.command_handler = sub_command_method.args[1]
-            publish_disco_method = wrapper.method_calls[4]
-        else:
-            publish_disco_method = wrapper.method_calls[3]
+            self.command_handler = ha_command_method.args[1]
 
-        self.assertEqual("publish", publish_disco_method[0])
+        # self.assertEqual("publish", publish_disco_method[0])
         self.assertEqual(
-            publish_disco_method.args[0],
+            first_publish.args[0],
             f"homeassistant/{device._component}/{device._unique_id}/config",
         )
-        disco = json.loads(publish_disco_method.args[1])
+        disco = json.loads(first_publish.args[1])
         # print(disco)
 
         self.assertEqual(device._name, disco["name"])

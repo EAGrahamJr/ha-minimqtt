@@ -23,6 +23,7 @@ Issues = "https://github.com/EAGrahamJr/ha-minimqtt/issues"
 
 [dependency-groups]
 dev = [
+    "paho-mqtt>=2.1.0",
     "pytest>=8.3.5",
     "ruff>=0.14.10",
 ]

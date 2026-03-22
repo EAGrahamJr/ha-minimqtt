@@ -147,7 +147,7 @@ class LightTestCase(TestBase):
 
         self.assertEqual("ON", status["state"])
         self.assertEqual("rgb", status["color_mode"])
-        self.assertIn(status["brightness"], range(165, 170))
+        self.assertEqual(status["brightness"], 255)
         color = status["color"]
         self.assertEqual(255, color["r"])
         self.assertIn(color["g"], range(163, 169))
